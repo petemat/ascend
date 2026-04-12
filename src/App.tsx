@@ -481,8 +481,8 @@ export default function App() {
           onLoad={() => setBgLoaded(true)}
           className="absolute left-1/2 top-[58%] w-[980px] max-w-none -translate-x-1/2 -translate-y-1/2"
           style={{
-            // Make normal mode match the "debug" readability, but keep it premium (still subtle).
-            opacity: debug ? 0.42 : 0.36,
+            // Make it clearly perceptible while staying premium.
+            opacity: debug ? 0.48 : 0.42,
             filter: debug ? "blur(6px)" : "blur(10px)",
           }}
         />
