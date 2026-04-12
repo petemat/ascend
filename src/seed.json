@@ -47,6 +47,101 @@
         { "id": "ex-2026-03-15-10", "name": "Goblet Squat", "category": "legs", "weightKg": 15, "sets": 2, "reps": 12, "setDetails": [12, 12], "source": "confirmed" },
         { "id": "ex-2026-03-15-11", "name": "Roman Chair Leg Raise", "category": "core", "weightKg": 0, "sets": 3, "reps": 12, "setDetails": [12, 12, 12], "source": "confirmed" }
       ]
+    },
+    {
+      "id": "ws-2026-03-18",
+      "date": "2026-03-18",
+      "title": "Pull / Shoulders / Core",
+      "source": "confirmed",
+      "exercises": [
+        { "id": "ex-2026-03-18-01", "name": "Lat Pulldown", "category": "back", "weightKg": 50, "sets": 1, "reps": 12, "setDetails": [12], "source": "confirmed" },
+        { "id": "ex-2026-03-18-02", "name": "Lat Pulldown", "category": "back", "weightKg": 55, "sets": 2, "reps": 10, "setDetails": [10, 10], "source": "confirmed" },
+        { "id": "ex-2026-03-18-03", "name": "One-Arm Dumbbell Row", "category": "back", "weightKg": 15, "sets": 2, "reps": 12, "setDetails": [12, 12], "source": "confirmed" },
+        { "id": "ex-2026-03-18-04", "name": "One-Arm Dumbbell Row", "category": "back", "weightKg": 17, "sets": 2, "reps": 10, "setDetails": [10, 10], "source": "confirmed" },
+        { "id": "ex-2026-03-18-05", "name": "Bodyweight Squat", "category": "legs", "weightKg": 0, "sets": 3, "reps": 25, "setDetails": [25, 25, 25], "source": "confirmed" },
+        { "id": "ex-2026-03-18-06", "name": "Shoulder Press", "category": "shoulders", "weightKg": 12.5, "sets": 1, "reps": 12, "setDetails": [12], "source": "confirmed" },
+        { "id": "ex-2026-03-18-07", "name": "Shoulder Press", "category": "shoulders", "weightKg": 15, "sets": 2, "reps": 10, "setDetails": [10, 10], "source": "confirmed" },
+        { "id": "ex-2026-03-18-08", "name": "Cable Fly", "category": "chest", "weightKg": 12, "sets": 3, "reps": 12, "setDetails": [12, 12, 12], "source": "confirmed" },
+        { "id": "ex-2026-03-18-09", "name": "Roman Chair Leg Raise", "category": "core", "weightKg": 0, "sets": 3, "reps": 12, "setDetails": [12, 12, 12], "source": "confirmed" }
+      ]
+    },
+    {
+      "id": "ws-2026-03-25",
+      "date": "2026-03-25",
+      "title": "Return After Break",
+      "source": "confirmed",
+      "exercises": [
+        { "id": "ex-2026-03-25-01", "name": "Incline Dumbbell Press", "category": "chest", "weightKg": 15, "sets": 2, "reps": 12, "setDetails": [12, 12], "source": "confirmed" },
+        { "id": "ex-2026-03-25-02", "name": "Incline Dumbbell Press", "category": "chest", "weightKg": 20, "sets": 2, "reps": 9, "setDetails": [8, 10], "source": "confirmed" },
+        { "id": "ex-2026-03-25-03", "name": "Shoulder Press", "category": "shoulders", "weightKg": 12.5, "sets": 3, "reps": 12, "setDetails": [12, 12, 12], "source": "confirmed" },
+        { "id": "ex-2026-03-25-04", "name": "Lat Pulldown", "category": "back", "weightKg": 50, "sets": 3, "reps": 12, "setDetails": [12, 12, 12], "source": "confirmed" },
+        { "id": "ex-2026-03-25-05", "name": "One-Arm Dumbbell Row", "category": "back", "weightKg": 15, "sets": 2, "reps": 12, "setDetails": [12, 12], "source": "inferred" },
+        { "id": "ex-2026-03-25-06", "name": "One-Arm Dumbbell Row", "category": "back", "weightKg": 17.5, "sets": 1, "reps": 12, "setDetails": [12], "source": "inferred" },
+        { "id": "ex-2026-03-25-07", "name": "Goblet Squat", "category": "legs", "weightKg": 7.5, "weightNote": "per hand", "sets": 3, "reps": 20, "setDetails": [20, 20, 20], "source": "confirmed" },
+        { "id": "ex-2026-03-25-08", "name": "Roman Chair Leg Raise", "category": "core", "weightKg": 0, "sets": 3, "reps": 12, "setDetails": [12, 12, 12], "source": "confirmed" }
+      ]
+    },
+    {
+      "id": "ws-2026-03-29",
+      "date": "2026-03-29",
+      "title": "Quick Sunday Session",
+      "source": "confirmed",
+      "exercises": [
+        { "id": "ex-2026-03-29-01", "name": "Incline Dumbbell Press", "category": "chest", "weightKg": 17.5, "sets": 1, "reps": 12, "setDetails": [12], "source": "confirmed" },
+        { "id": "ex-2026-03-29-02", "name": "Incline Dumbbell Press", "category": "chest", "weightKg": 20, "sets": 2, "reps": 10, "setDetails": [10, 10], "source": "confirmed" },
+        { "id": "ex-2026-03-29-03", "name": "Push-Up", "category": "chest", "weightKg": 0, "sets": 3, "reps": 16, "setDetails": [20, 15, 12], "source": "confirmed" },
+        { "id": "ex-2026-03-29-04", "name": "Shoulder Press", "category": "shoulders", "weightKg": 12.5, "sets": 3, "reps": 10, "setDetails": [10, 10, 10], "source": "inferred" },
+        { "id": "ex-2026-03-29-05", "name": "Lateral Raise", "category": "shoulders", "weightKg": 7.5, "sets": 1, "reps": 8, "setDetails": [8], "source": "confirmed" },
+        { "id": "ex-2026-03-29-06", "name": "Lateral Raise", "category": "shoulders", "weightKg": 5, "sets": 2, "reps": 10, "setDetails": [10, 10], "source": "inferred" }
+      ]
+    },
+    {
+      "id": "ws-2026-04-01",
+      "date": "2026-04-01",
+      "title": "Hotel Gym Workout",
+      "source": "confirmed",
+      "exercises": [
+        { "id": "ex-2026-04-01-01", "name": "Incline Dumbbell Press", "category": "chest", "weightKg": 16, "sets": 3, "reps": 15, "setDetails": [15, 15, 15], "source": "confirmed" },
+        { "id": "ex-2026-04-01-02", "name": "Machine Row", "category": "back", "weightKg": 50, "weightNote": "estimated from machine level 6", "sets": 3, "reps": 12, "setDetails": [12, 12, 12], "source": "estimated" },
+        { "id": "ex-2026-04-01-03", "name": "Shoulder Press", "category": "shoulders", "weightKg": 12, "sets": 3, "reps": 12, "setDetails": [12, 12, 12], "source": "confirmed" },
+        { "id": "ex-2026-04-01-04", "name": "Lateral Raise", "category": "shoulders", "weightKg": 5, "sets": 3, "reps": 12, "setDetails": [12, 12, 12], "source": "estimated" },
+        { "id": "ex-2026-04-01-05", "name": "Goblet Squat", "category": "legs", "weightKg": 14, "sets": 2, "reps": 15, "setDetails": [15, 15], "source": "estimated" },
+        { "id": "ex-2026-04-01-06", "name": "Biceps Curl", "category": "arms", "weightKg": 12, "sets": 2, "reps": 8, "setDetails": [8, 8], "source": "confirmed" }
+      ]
+    },
+    {
+      "id": "ws-2026-04-08",
+      "date": "2026-04-08",
+      "title": "Moderate Re-Entry Workout",
+      "source": "confirmed",
+      "exercises": [
+        { "id": "ex-2026-04-08-01", "name": "Incline Dumbbell Press", "category": "chest", "weightKg": 15, "sets": 1, "reps": 12, "setDetails": [12], "source": "confirmed" },
+        { "id": "ex-2026-04-08-02", "name": "Incline Dumbbell Press", "category": "chest", "weightKg": 17.5, "sets": 2, "reps": 10, "setDetails": [10, 10], "source": "confirmed" },
+        { "id": "ex-2026-04-08-03", "name": "Shoulder Press", "category": "shoulders", "weightKg": 12.5, "sets": 2, "reps": 12, "setDetails": [12, 12], "source": "confirmed" },
+        { "id": "ex-2026-04-08-04", "name": "Shoulder Press", "category": "shoulders", "weightKg": 15, "sets": 1, "reps": 10, "setDetails": [10], "source": "confirmed" },
+        { "id": "ex-2026-04-08-05", "name": "Goblet Squat", "category": "legs", "weightKg": 15, "sets": 3, "reps": 15, "setDetails": [15, 15, 15], "source": "confirmed" },
+        { "id": "ex-2026-04-08-06", "name": "One-Arm Dumbbell Row", "category": "back", "weightKg": 17.5, "sets": 3, "reps": 12, "setDetails": [12, 12, 12], "source": "confirmed" },
+        { "id": "ex-2026-04-08-07", "name": "Biceps Curl", "category": "arms", "weightKg": 12.5, "sets": 3, "reps": 10, "setDetails": [10, 10, 10], "source": "confirmed" },
+        { "id": "ex-2026-04-08-08", "name": "Lateral Raise", "category": "shoulders", "weightKg": 7, "sets": 3, "reps": 10, "setDetails": [10, 10, 10], "source": "confirmed" },
+        { "id": "ex-2026-04-08-09", "name": "Roman Chair Leg Raise", "category": "core", "weightKg": 0, "sets": 3, "reps": 12, "setDetails": [12, 12, 12], "source": "confirmed" }
+      ]
+    },
+    {
+      "id": "ws-2026-04-11",
+      "date": "2026-04-11",
+      "title": "Push / Legs / Arms / Core",
+      "source": "confirmed",
+      "exercises": [
+        { "id": "ex-2026-04-11-01", "name": "Incline Dumbbell Press", "category": "chest", "weightKg": 17.5, "sets": 3, "reps": 12, "setDetails": [12, 12, 12], "source": "estimated" },
+        { "id": "ex-2026-04-11-02", "name": "Goblet Squat", "category": "legs", "weightKg": 17.5, "sets": 3, "reps": 15, "setDetails": [15, 15, 15], "source": "confirmed" },
+        { "id": "ex-2026-04-11-03", "name": "Shoulder Press", "category": "shoulders", "weightKg": 15, "sets": 3, "reps": 15, "setDetails": [15, 15, 15], "source": "confirmed" },
+        { "id": "ex-2026-04-11-04", "name": "One-Arm Dumbbell Row", "category": "back", "weightKg": 17.5, "sets": 3, "reps": 12, "setDetails": [12, 12, 12], "source": "confirmed" },
+        { "id": "ex-2026-04-11-05", "name": "Lateral Raise", "category": "shoulders", "weightKg": 6, "sets": 3, "reps": 12, "setDetails": [12, 12, 12], "source": "confirmed" },
+        { "id": "ex-2026-04-11-06", "name": "Biceps Curl", "category": "arms", "weightKg": 12.5, "sets": 1, "reps": 10, "setDetails": [10], "source": "confirmed" },
+        { "id": "ex-2026-04-11-07", "name": "Biceps Curl", "category": "arms", "weightKg": 10, "sets": 2, "reps": 10, "setDetails": [10, 10], "source": "estimated" },
+        { "id": "ex-2026-04-11-08", "name": "Leg Raise", "category": "core", "weightKg": 0, "sets": 3, "reps": 15, "setDetails": [15, 15, 15], "source": "confirmed" },
+        { "id": "ex-2026-04-11-09", "name": "Push-Up", "category": "chest", "weightKg": 0, "sets": 2, "reps": 20, "setDetails": [20, 20], "totalReps": 40, "source": "estimated" }
+      ]
     }
   ]
 }

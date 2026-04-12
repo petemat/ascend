@@ -54,7 +54,7 @@ export type AscendSeed = {
 
 export const seed = seedJson as AscendSeed;
 
-export const STORAGE_KEY = "ascend.v1";
+export const STORAGE_KEY = "ascend.v2";
 
 export type AscendState = {
   unitSystem: UnitSystem;

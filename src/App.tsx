@@ -244,17 +244,23 @@ function WorkoutsView(props: {
         <Card title="Exercises">
           {selected.exercises.length ? (
             <div className="space-y-3">
-              {selected.exercises.map((e) => (
-                <div key={e.id} className="flex items-center justify-between gap-4">
-                  <div>
-                    <div className="text-sm text-white/90 font-medium">{e.name}</div>
-                    <div className="text-[12px] text-white/45 mt-1">
-                      {e.weightKg} kg · {e.sets} × {e.reps}
+              {selected.exercises.map((e) => {
+                const weightLabel = e.weightKg === 0 ? "BW" : `${e.weightKg} kg`;
+                const repsLabel = e.setDetails?.length ? e.setDetails.join(" · ") : `${e.reps}`;
+                return (
+                  <div key={e.id} className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="text-sm text-white/90 font-medium">{e.name}</div>
+                      <div className="text-[12px] text-white/45 mt-1">
+                        {weightLabel}
+                        {e.weightNote ? ` (${e.weightNote})` : ""} · {e.sets} sets
+                      </div>
+                      <div className="text-[12px] text-white/45 mt-1">Reps: {repsLabel}</div>
                     </div>
+                    <div className="text-[11px] text-white/35">{e.source ?? "logged"}</div>
                   </div>
-                  <div className="text-[11px] text-white/35">Logged</div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="text-sm text-white/45">No exercises yet. Add your first set.</div>
