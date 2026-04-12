@@ -23,6 +23,19 @@ type RunState = {
   // collected
   results: Array<{ exId: string; repsBySet: number[]; weightKg: number }>;
   startedAt: number | null;
+  rest: null | {
+    kind: "set" | "exercise";
+    totalSec: number;
+    untilMs: number;
+    // applied when rest ends
+    advance: {
+      exIndex: number;
+      setIndex: number;
+      currentWeightKg: number;
+      currentReps: number;
+      results: Array<{ exId: string; repsBySet: number[]; weightKg: number }>;
+    };
+  };
 };
 
 function cn(...xs: Array<string | false | null | undefined>) {
@@ -645,6 +658,12 @@ function fmtElapsed(ms: number) {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
+function fmtClock(sec: number) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
 function RunWorkoutModal(props: {
   run: RunState;
   onClose: () => void;
@@ -662,6 +681,9 @@ function RunWorkoutModal(props: {
   const repsOpts = repsOptions(30);
 
   function next() {
+    // prevent double-actions while resting
+    if (props.run.rest) return;
+
     // append rep into results
     const existing = props.run.results.find((r) => r.exId === ex.id);
     const reps = props.run.currentReps;
@@ -709,33 +731,60 @@ function RunWorkoutModal(props: {
       return;
     }
 
-    // advance
-    if (isLastSet) {
-      const nextEx = plannedLocal.exercises[props.run.exIndex + 1]!;
-      props.onUpdate({
-        results,
-        exIndex: props.run.exIndex + 1,
-        setIndex: 0,
-        currentWeightKg: nextEx.weightKg,
-        currentReps: nextEx.targetReps,
-      });
-    } else {
-      // Next set: keep what the user just used (weight + reps) to minimize re-entry.
-      props.onUpdate({
-        results,
-        setIndex: props.run.setIndex + 1,
-        currentWeightKg: props.run.currentWeightKg,
-        currentReps: props.run.currentReps,
-      });
-    }
+    // Advance patch is applied AFTER rest.
+    const restSec = isLastSet ? 150 : 90;
+    const nextPatch = isLastSet
+      ? (() => {
+          const nextEx = plannedLocal.exercises[props.run.exIndex + 1]!;
+          return {
+            exIndex: props.run.exIndex + 1,
+            setIndex: 0,
+            currentWeightKg: nextEx.weightKg,
+            currentReps: nextEx.targetReps,
+            results,
+          };
+        })()
+      : {
+          exIndex: props.run.exIndex,
+          setIndex: props.run.setIndex + 1,
+          currentWeightKg: props.run.currentWeightKg,
+          currentReps: props.run.currentReps,
+          results,
+        };
+
+    props.onUpdate({
+      rest: {
+        kind: isLastSet ? "exercise" : "set",
+        totalSec: restSec,
+        untilMs: Date.now() + restSec * 1000,
+        advance: nextPatch,
+      },
+      results,
+    });
   }
 
   const startedAt = props.run.startedAt ?? Date.now();
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000);
+    const t = setInterval(() => setNow(Date.now()), 250);
     return () => clearInterval(t);
   }, []);
+
+  // Rest timer auto-advance
+  useEffect(() => {
+    if (!props.run.open) return;
+    const rest = props.run.rest;
+    if (!rest) return;
+    if (Date.now() < rest.untilMs) return;
+    props.onUpdate({
+      rest: null,
+      exIndex: rest.advance.exIndex,
+      setIndex: rest.advance.setIndex,
+      currentWeightKg: rest.advance.currentWeightKg,
+      currentReps: rest.advance.currentReps,
+      results: rest.advance.results,
+    });
+  }, [props.run.open, props.run.rest, props.onUpdate]);
 
   return (
     <div className="fixed inset-0 z-[80]">
@@ -755,24 +804,95 @@ function RunWorkoutModal(props: {
           </div>
 
           <div className="px-5 pb-5">
-            <div className="grid grid-cols-2 gap-3">
-              <WheelPicker
-                label="Weight (kg)"
-                value={props.run.currentWeightKg}
-                options={weightOpts}
-                onChange={(v) => props.onUpdate({ currentWeightKg: v })}
-              />
-              <WheelPicker
-                label="Reps"
-                value={props.run.currentReps}
-                options={repsOpts}
-                onChange={(v) => props.onUpdate({ currentReps: v })}
-              />
-            </div>
+            {props.run.rest ? (
+              (() => {
+                const remainingSec = Math.max(0, Math.ceil((props.run.rest!.untilMs - now) / 1000));
+                const pct = props.run.rest!.totalSec ? remainingSec / props.run.rest!.totalSec : 0;
+                return (
+                  <div>
+                    <div className="text-[11px] text-white/45 mb-2">Rest ({props.run.rest!.kind})</div>
+                    <div className="text-5xl font-semibold tracking-tight tabular-nums text-white/90">
+                      {fmtClock(remainingSec)}
+                    </div>
+                    <div className="mt-4 h-2 rounded-full bg-white/10 overflow-hidden">
+                      <div
+                        className="h-full bg-gold-300/70"
+                        style={{ width: `${Math.max(0, Math.min(1, pct)) * 100}%` }}
+                      />
+                    </div>
+                    <div className="mt-4 grid grid-cols-3 gap-2">
+                      <button
+                        className="rounded-2xl py-3 border border-white/10 bg-white/[0.04] text-white/75"
+                        onClick={() => {
+                          const rest = props.run.rest!;
+                          props.onUpdate({
+                            rest: null,
+                            exIndex: rest.advance.exIndex,
+                            setIndex: rest.advance.setIndex,
+                            currentWeightKg: rest.advance.currentWeightKg,
+                            currentReps: rest.advance.currentReps,
+                            results: rest.advance.results,
+                          });
+                        }}
+                      >
+                        Skip
+                      </button>
+                      <button
+                        className="rounded-2xl py-3 border border-white/10 bg-white/[0.04] text-white/75"
+                        onClick={() => {
+                          const rest = props.run.rest!;
+                          props.onUpdate({
+                            rest: {
+                              ...rest,
+                              totalSec: rest.totalSec + 15,
+                              untilMs: rest.untilMs + 15000,
+                            },
+                          });
+                        }}
+                      >
+                        +15s
+                      </button>
+                      <button
+                        className="rounded-2xl py-3 border border-white/10 bg-white/[0.04] text-white/75"
+                        onClick={() => {
+                          const rest = props.run.rest!;
+                          props.onUpdate({
+                            rest: {
+                              ...rest,
+                              totalSec: Math.max(1, rest.totalSec - 15),
+                              untilMs: Math.max(Date.now(), rest.untilMs - 15000),
+                            },
+                          });
+                        }}
+                      >
+                        -15s
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <WheelPicker
+                    label="Weight (kg)"
+                    value={props.run.currentWeightKg}
+                    options={weightOpts}
+                    onChange={(v) => props.onUpdate({ currentWeightKg: v })}
+                  />
+                  <WheelPicker
+                    label="Reps"
+                    value={props.run.currentReps}
+                    options={repsOpts}
+                    onChange={(v) => props.onUpdate({ currentReps: v })}
+                  />
+                </div>
 
-            <button className="mt-4 w-full rounded-2xl py-3 border border-gold-300/30 bg-white/[0.06] text-gold-200 shadow-glow" onClick={next}>
-              Done
-            </button>
+                <button className="mt-4 w-full rounded-2xl py-3 border border-gold-300/30 bg-white/[0.06] text-gold-200 shadow-glow" onClick={next}>
+                  Done
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -795,6 +915,7 @@ export default function App() {
     currentReps: 10,
     results: [],
     startedAt: null,
+    rest: null,
   });
 
   useEffect(() => {
@@ -879,6 +1000,7 @@ export default function App() {
                   currentReps: p.exercises[0]?.targetReps ?? 10,
                   results: [],
                   startedAt: Date.now(),
+                  rest: null,
                 })
               }
             />
@@ -907,6 +1029,7 @@ export default function App() {
             currentReps: 10,
             results: [],
             startedAt: null,
+            rest: null,
           });
           setTab("workouts");
         }}
