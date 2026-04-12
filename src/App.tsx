@@ -482,8 +482,8 @@ export default function App() {
           className="absolute left-1/2 top-[58%] w-[980px] max-w-none -translate-x-1/2 -translate-y-1/2"
           style={{
             // Make it clearly perceptible while staying premium.
-            opacity: debug ? 0.48 : 0.42,
-            filter: debug ? "blur(6px)" : "blur(10px)",
+            opacity: debug ? 0.70 : 0.58,
+            filter: debug ? "blur(4px)" : "blur(8px)",
           }}
         />
       </div>
