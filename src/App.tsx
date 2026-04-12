@@ -468,20 +468,20 @@ export default function App() {
     <div className="min-h-screen bg-noir-950">
       {/* Background silhouette: render as <img> (more reliable on mobile than filtered background-image) */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        {/* Keep it simple: single silhouette layer (no fancy blend/contrast), just readable opacity + blur */}
+        {/* Single silhouette layer. If you can't see it, it's simply too subtle -> boost opacity + reduce blur. */}
         <img
           src={silhouette}
           alt=""
           onLoad={() => setBgLoaded(true)}
-          className="absolute left-1/2 top-[28%] w-[860px] max-w-none -translate-x-1/2 -translate-y-1/2"
+          className="absolute left-1/2 top-[30%] w-[980px] max-w-none -translate-x-1/2 -translate-y-1/2"
           style={{
-            opacity: 0.16,
-            filter: "blur(18px)",
+            opacity: debug ? 1 : 0.32,
+            filter: debug ? "none" : "blur(10px)",
           }}
         />
       </div>
-      {/* overlay */}
-      <div className="fixed inset-0 pointer-events-none bg-gradient-to-b from-black/25 via-black/10 to-black/50 z-10" />
+      {/* overlay (lighter) */}
+      <div className="fixed inset-0 pointer-events-none bg-gradient-to-b from-black/10 via-black/5 to-black/35 z-10" />
 
       {debug ? (
         !bgLoaded ? (
