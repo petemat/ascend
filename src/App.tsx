@@ -456,6 +456,7 @@ export default function App() {
   const [tab, setTab] = useState<Tab>("dashboard");
   const [state, setState] = useState<AscendState>(() => loadState());
   const [bgLoaded, setBgLoaded] = useState(false);
+  const debug = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("debug") === "1";
 
   useEffect(() => {
     saveState(state);
@@ -467,40 +468,32 @@ export default function App() {
     <div className="min-h-screen bg-noir-950">
       {/* Background silhouette: render as <img> (more reliable on mobile than filtered background-image) */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        {/* Layer A: slightly sharper silhouette so the figure reads */}
+        {/* Keep it simple: single silhouette layer (no fancy blend/contrast), just readable opacity + blur */}
         <img
           src={silhouette}
           alt=""
           onLoad={() => setBgLoaded(true)}
-          className="absolute left-1/2 top-[26%] w-[860px] max-w-none -translate-x-1/2 -translate-y-1/2"
+          className="absolute left-1/2 top-[28%] w-[860px] max-w-none -translate-x-1/2 -translate-y-1/2"
           style={{
-            opacity: 0.22,
-            filter: "blur(10px) contrast(1.25) brightness(1.15)",
-          }}
-        />
-        {/* Layer B: bigger soft glow to keep it premium */}
-        <img
-          src={silhouette}
-          alt=""
-          className="absolute left-1/2 top-[26%] w-[1200px] max-w-none -translate-x-1/2 -translate-y-1/2"
-          style={{
-            opacity: 0.12,
-            filter: "blur(42px) contrast(1.15) brightness(1.10)",
+            opacity: 0.16,
+            filter: "blur(18px)",
           }}
         />
       </div>
-      {/* slightly lighter overlay so the silhouette isn't crushed */}
-      <div className="fixed inset-0 pointer-events-none bg-gradient-to-b from-black/25 via-black/10 to-black/45 z-10" />
+      {/* overlay */}
+      <div className="fixed inset-0 pointer-events-none bg-gradient-to-b from-black/25 via-black/10 to-black/50 z-10" />
 
-      {!bgLoaded ? (
-        <div className="fixed top-2 right-2 z-[70] text-[10px] px-2 py-1 rounded-full border border-white/10 bg-black/40 text-white/60">
-          BG loading…
-        </div>
-      ) : (
-        <div className="fixed top-2 right-2 z-[70] text-[10px] px-2 py-1 rounded-full border border-white/10 bg-black/40 text-white/40">
-          BG ok
-        </div>
-      )}
+      {debug ? (
+        !bgLoaded ? (
+          <div className="fixed top-2 right-2 z-[70] text-[10px] px-2 py-1 rounded-full border border-white/10 bg-black/40 text-white/60">
+            BG loading…
+          </div>
+        ) : (
+          <div className="fixed top-2 right-2 z-[70] text-[10px] px-2 py-1 rounded-full border border-white/10 bg-black/40 text-white/40">
+            BG ok
+          </div>
+        )
+      ) : null}
 
       <div className="relative z-20 mx-auto max-w-[520px] px-4 pt-6 pb-28">
         <div className="flex items-center justify-between">
