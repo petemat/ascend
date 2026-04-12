@@ -56,19 +56,45 @@ export const seed = seedJson as AscendSeed;
 
 export const STORAGE_KEY = "ascend.v2";
 
+export type PlannedExercise = {
+  id: string;
+  name: string;
+  category: ExerciseCategory;
+  weightKg: number;
+  sets: number;
+  targetReps: number; // per set target
+};
+
+export type PlannedWorkout = {
+  id: string;
+  date: string; // planned date (yyyy-mm-dd)
+  title: string;
+  exercises: PlannedExercise[];
+  createdAt: number;
+};
+
 export type AscendState = {
   unitSystem: UnitSystem;
   workoutSessions: WorkoutSession[];
+  plannedWorkout?: PlannedWorkout | null;
 };
 
 export function loadState(): AscendState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        unitSystem: parsed?.unitSystem ?? seed.meta.unitSystem,
+        workoutSessions: Array.isArray(parsed?.workoutSessions) ? parsed.workoutSessions : seed.workoutSessions,
+        plannedWorkout: parsed?.plannedWorkout ?? null,
+      };
+    }
   } catch {}
   return {
     unitSystem: seed.meta.unitSystem,
     workoutSessions: seed.workoutSessions,
+    plannedWorkout: null,
   };
 }
 

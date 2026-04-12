@@ -1,8 +1,28 @@
 import { useEffect, useState } from "react";
 import silhouette from "./assets/silhouette.jpg";
-import { loadState, saveState, type AscendState, type WorkoutSession, type ExerciseSet } from "./seed";
+import {
+  loadState,
+  saveState,
+  type AscendState,
+  type WorkoutSession,
+  type ExerciseSet,
+  type PlannedWorkout,
+  type PlannedExercise,
+} from "./seed";
 
 type Tab = "dashboard" | "workouts" | "progress" | "plan";
+
+type RunState = {
+  open: boolean;
+  planned: PlannedWorkout | null;
+  exIndex: number;
+  setIndex: number;
+  // editable during run
+  currentWeightKg: number;
+  currentReps: number;
+  // collected
+  results: Array<{ exId: string; repsBySet: number[]; weightKg: number }>;
+};
 
 function cn(...xs: Array<string | false | null | undefined>) {
   return xs.filter(Boolean).join(" ");
@@ -164,6 +184,26 @@ function Modal(props: { open: boolean; onClose: () => void; title: string; child
 
 function uid(prefix: string) {
   return `${prefix}-${Math.random().toString(16).slice(2)}-${Date.now().toString(16)}`;
+}
+
+// (unused) rep-range parser reserved for progression v2
+
+function roundToStep(x: number, step: number) {
+  return Math.round(x / step) * step;
+}
+
+function weightOptions(base: number, step = 2.5, spanSteps = 6) {
+  const opts: number[] = [];
+  const b = roundToStep(base, step);
+  for (let i = -spanSteps; i <= spanSteps; i++) {
+    const v = Math.max(0, roundToStep(b + i * step, step));
+    if (!opts.includes(v)) opts.push(v);
+  }
+  return opts;
+}
+
+function repsOptions(max = 30) {
+  return Array.from({ length: max + 1 }, (_, i) => i);
 }
 
 function isoToday() {
@@ -427,33 +467,258 @@ function ProgressView() {
   );
 }
 
-function PlanView() {
+function computeNextWorkout(sessions: WorkoutSession[]): PlannedWorkout {
+  const sorted = sessions.slice().sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  const last = sorted[0];
+  const lastByName = new Map<string, ExerciseSet>();
+
+  for (const s of sorted) {
+    for (const e of s.exercises) {
+      if (!lastByName.has(e.name)) lastByName.set(e.name, e);
+    }
+  }
+
+  const baseExercises = last
+    ? Array.from(new Map(last.exercises.map((e) => [e.name, e])).values())
+    : Array.from(lastByName.values()).slice(0, 8);
+
+  const planned: PlannedExercise[] = baseExercises.slice(0, 9).map((e) => {
+    const reps = e.reps ?? 10;
+    const plannedTarget = Math.max(6, Math.min(15, reps));
+
+    // Simple progression v1: if last setDetails all >= plannedTarget and same weight appears >=2 times in history, bump.
+    const hist = sorted
+      .flatMap((s) => s.exercises.filter((x) => x.name === e.name))
+      .slice(0, 10);
+
+    const lastTwoSameWeight = hist.filter((h) => h.weightKg === e.weightKg).slice(0, 2);
+    const achieved = (ex: ExerciseSet) => {
+      const repsArr = ex.setDetails?.length ? ex.setDetails : Array.from({ length: ex.sets }, () => ex.reps);
+      return repsArr.every((r) => r >= plannedTarget);
+    };
+
+    const bump = lastTwoSameWeight.length === 2 && lastTwoSameWeight.every(achieved);
+    const nextWeight = e.weightKg === 0 ? 0 : bump ? roundToStep(e.weightKg + 2.5, 2.5) : e.weightKg;
+
+    return {
+      id: uid("px"),
+      name: e.name,
+      category: e.category,
+      weightKg: nextWeight,
+      sets: Math.max(1, e.sets ?? 3),
+      targetReps: plannedTarget,
+    };
+  });
+
+  return {
+    id: uid("pw"),
+    date: isoToday(),
+    title: last ? `Next: ${last.title}` : "Next Workout",
+    exercises: planned,
+    createdAt: Date.now(),
+  };
+}
+
+function WheelPicker(props: { value: number; options: number[]; onChange: (v: number) => void; label: string }) {
+  return (
+    <div className="flex-1">
+      <div className="text-[11px] text-white/45 mb-2">{props.label}</div>
+      <div className="relative rounded-2xl border border-white/10 bg-white/[0.04] overflow-hidden">
+        <div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 h-10 border-y border-gold-300/25 bg-white/[0.02]" />
+        <div
+          className="h-40 overflow-y-auto snap-y snap-mandatory px-2 py-8"
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            const itemH = 40;
+            const idx = Math.round(el.scrollTop / itemH);
+            const v = props.options[Math.max(0, Math.min(props.options.length - 1, idx))];
+            props.onChange(v);
+          }}
+        >
+          {props.options.map((o) => (
+            <div key={o} className={cn("h-10 snap-start flex items-center justify-center text-sm", o === props.value ? "text-gold-200" : "text-white/65")}>
+              {o}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PlanView(props: {
+  sessions: WorkoutSession[];
+  plannedWorkout: PlannedWorkout | null | undefined;
+  onPlan: (p: PlannedWorkout) => void;
+  onStart: (p: PlannedWorkout) => void;
+}) {
+  const planned = props.plannedWorkout ?? null;
   return (
     <div className="space-y-4">
       <div className="text-lg text-white/90 font-semibold">Progression / Plan</div>
 
-      <Card>
-        <div className="flex items-center justify-center py-6">
-          <div className="relative w-44 h-44 rounded-full border border-white/10 bg-white/[0.02] flex items-center justify-center">
-            <div className="absolute inset-3 rounded-full border border-gold-300/30 shadow-glow" />
-            <div className="text-center">
-              <div className="text-4xl font-semibold text-white/90">75%</div>
-              <div className="text-[11px] text-white/45 mt-2">Progress</div>
-            </div>
-          </div>
+      <Card title="Next Workout">
+        <div className="text-sm text-white/90 font-medium">{planned ? planned.title : "No plan yet"}</div>
+        <div className="text-[12px] text-white/45 mt-1">{planned ? `${planned.exercises.length} exercises` : "Generate a plan based on your history."}</div>
+
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <button
+            className="rounded-2xl py-3 border border-white/10 bg-white/[0.04] text-white/80"
+            onClick={() => props.onPlan(computeNextWorkout(props.sessions))}
+          >
+            Generate
+          </button>
+          <button
+            className={cn(
+              "rounded-2xl py-3 border border-gold-300/30 bg-white/[0.06] text-gold-200 shadow-glow",
+              planned ? "" : "opacity-40"
+            )}
+            onClick={() => planned && props.onStart(planned)}
+            disabled={!planned}
+          >
+            Start
+          </button>
         </div>
       </Card>
 
-      <Card title="Next Targets">
-        <div className="flex items-center justify-between text-sm text-white/80">
-          <div>Weight</div>
-          <div className="text-white/90 font-semibold">20 kg</div>
+      {planned ? (
+        <Card title="Targets">
+          <div className="space-y-4">
+            {planned.exercises.map((e) => (
+              <div key={e.id} className="flex items-center justify-between gap-4">
+                <div>
+                  <div className="text-sm text-white/90 font-medium">{e.name}</div>
+                  <div className="text-[12px] text-white/45 mt-1">
+                    {e.weightKg === 0 ? "BW" : `${e.weightKg} kg`} · {e.sets} sets · target {e.targetReps}
+                  </div>
+                </div>
+                <div className="text-[11px] text-white/35">Next</div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      ) : null}
+    </div>
+  );
+}
+
+function RunWorkoutModal(props: {
+  run: RunState;
+  onClose: () => void;
+  onUpdate: (patch: Partial<RunState>) => void;
+  onFinish: (session: WorkoutSession) => void;
+}) {
+  const planned = props.run.planned;
+  if (!props.run.open || !planned) return null;
+  const plannedLocal = planned;
+
+  const ex = plannedLocal.exercises[props.run.exIndex]!;
+  const setNo = props.run.setIndex + 1;
+
+  const weightOpts = weightOptions(ex.weightKg, 2.5, 8);
+  const repsOpts = repsOptions(30);
+
+  function next() {
+    // append rep into results
+    const existing = props.run.results.find((r) => r.exId === ex.id);
+    const reps = props.run.currentReps;
+    const weight = props.run.currentWeightKg;
+
+    const results = existing
+      ? props.run.results.map((r) => (r.exId === ex.id ? { ...r, weightKg: weight, repsBySet: [...r.repsBySet, reps] } : r))
+      : [...props.run.results, { exId: ex.id, weightKg: weight, repsBySet: [reps] }];
+
+    const isLastSet = setNo >= ex.sets;
+    const isLastEx = props.run.exIndex >= plannedLocal.exercises.length - 1;
+
+    if (isLastSet && isLastEx) {
+      // build WorkoutSession
+      const exercises: ExerciseSet[] = plannedLocal.exercises.map((p) => {
+        const rr = results.find((r) => r.exId === p.id);
+        const setDetails = rr?.repsBySet?.length ? rr.repsBySet : Array.from({ length: p.sets }, () => p.targetReps);
+        return {
+          id: uid("ex"),
+          name: p.name,
+          category: p.category,
+          weightKg: rr ? rr.weightKg : p.weightKg,
+          sets: p.sets,
+          reps: setDetails[0] ?? p.targetReps,
+          setDetails,
+          source: "confirmed",
+        };
+      });
+
+      const session: WorkoutSession = {
+        id: uid("ws"),
+        date: plannedLocal.date,
+        title: plannedLocal.title.replace(/^Next:\s*/i, ""),
+        source: "confirmed",
+        exercises,
+      };
+
+      props.onFinish(session);
+      return;
+    }
+
+    // advance
+    if (isLastSet) {
+      const nextEx = plannedLocal.exercises[props.run.exIndex + 1]!;
+      props.onUpdate({
+        results,
+        exIndex: props.run.exIndex + 1,
+        setIndex: 0,
+        currentWeightKg: nextEx.weightKg,
+        currentReps: nextEx.targetReps,
+      });
+    } else {
+      props.onUpdate({
+        results,
+        setIndex: props.run.setIndex + 1,
+        // keep weight, keep reps prefilled to target
+        currentReps: ex.targetReps,
+      });
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[80]">
+      <div className="absolute inset-0 bg-black/70" onClick={props.onClose} />
+      <div className="absolute left-0 right-0 bottom-0 mx-auto max-w-[520px] px-4 pb-28">
+        <div className="rounded-3xl border border-white/10 bg-black/60 backdrop-blur-2xl shadow-card overflow-hidden">
+          <div className="px-5 pt-4 pb-3 flex items-center justify-between">
+            <div>
+              <div className="text-sm text-white/85 font-semibold">{ex.name}</div>
+              <div className="text-[11px] text-white/45 mt-1">
+                Set {setNo}/{ex.sets} · Exercise {props.run.exIndex + 1}/{planned.exercises.length}
+              </div>
+            </div>
+            <button className="text-white/55 hover:text-white/80" onClick={props.onClose}>
+              Exit
+            </button>
+          </div>
+
+          <div className="px-5 pb-5">
+            <div className="grid grid-cols-2 gap-3">
+              <WheelPicker
+                label="Weight (kg)"
+                value={props.run.currentWeightKg}
+                options={weightOpts}
+                onChange={(v) => props.onUpdate({ currentWeightKg: v })}
+              />
+              <WheelPicker
+                label="Reps"
+                value={props.run.currentReps}
+                options={repsOpts}
+                onChange={(v) => props.onUpdate({ currentReps: v })}
+              />
+            </div>
+
+            <button className="mt-4 w-full rounded-2xl py-3 border border-gold-300/30 bg-white/[0.06] text-gold-200 shadow-glow" onClick={next}>
+              Done
+            </button>
+          </div>
         </div>
-        <div className="mt-3 flex items-center justify-between text-sm text-white/80">
-          <div>Reps</div>
-          <div className="text-white/90 font-semibold">12 × sets</div>
-        </div>
-      </Card>
+      </div>
     </div>
   );
 }
@@ -463,6 +728,16 @@ export default function App() {
   const [state, setState] = useState<AscendState>(() => loadState());
   const [bgLoaded, setBgLoaded] = useState(false);
   const debug = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("debug") === "1";
+
+  const [run, setRun] = useState<RunState>({
+    open: false,
+    planned: null,
+    exIndex: 0,
+    setIndex: 0,
+    currentWeightKg: 0,
+    currentReps: 10,
+    results: [],
+  });
 
   useEffect(() => {
     saveState(state);
@@ -525,11 +800,51 @@ export default function App() {
             />
           )}
           {tab === "progress" && <ProgressView />}
-          {tab === "plan" && <PlanView />}
+          {tab === "plan" && (
+            <PlanView
+              sessions={sessions}
+              plannedWorkout={state.plannedWorkout}
+              onPlan={(p) => setState((prev) => ({ ...prev, plannedWorkout: p }))}
+              onStart={(p) =>
+                setRun({
+                  open: true,
+                  planned: p,
+                  exIndex: 0,
+                  setIndex: 0,
+                  currentWeightKg: p.exercises[0]?.weightKg ?? 0,
+                  currentReps: p.exercises[0]?.targetReps ?? 10,
+                  results: [],
+                })
+              }
+            />
+          )}
         </div>
       </div>
 
       <BottomNav tab={tab} onTab={setTab} />
+
+      <RunWorkoutModal
+        run={run}
+        onClose={() => setRun((prev) => ({ ...prev, open: false }))}
+        onUpdate={(patch) => setRun((prev) => ({ ...prev, ...patch }))}
+        onFinish={(session) => {
+          setState((prev) => ({
+            ...prev,
+            workoutSessions: [session, ...prev.workoutSessions],
+            plannedWorkout: null,
+          }));
+          setRun({
+            open: false,
+            planned: null,
+            exIndex: 0,
+            setIndex: 0,
+            currentWeightKg: 0,
+            currentReps: 10,
+            results: [],
+          });
+          setTab("workouts");
+        }}
+      />
     </div>
   );
 }
