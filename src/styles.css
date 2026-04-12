@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Inter, Roboto, Helvetica, Arial;
+  background: #050508;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* prevent overscroll glow on mobile */
+* {
+  -webkit-tap-highlight-color: transparent;
+}

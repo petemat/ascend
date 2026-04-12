@@ -1,0 +1,52 @@
+{
+  "app": {
+    "name": "Ascend",
+    "version": "0.1.0"
+  },
+  "meta": {
+    "unitSystem": "metric",
+    "currency": "EUR",
+    "notes": [
+      "weightKg is per dumbbell when the exercise uses dumbbells, unless explicitly noted otherwise.",
+      "bodyweight exercises use weightKg = 0.",
+      "source can be: confirmed, inferred, estimated.",
+      "setDetails is used when sets vary."
+    ]
+  },
+  "exerciseDefaults": [
+    { "name": "Incline Dumbbell Press", "category": "chest", "equipment": "dumbbells", "targetRepRange": "8-12" },
+    { "name": "Lat Pulldown", "category": "back", "equipment": "cable_machine", "targetRepRange": "10-12" },
+    { "name": "One-Arm Dumbbell Row", "category": "back", "equipment": "dumbbells", "targetRepRange": "10-12" },
+    { "name": "Shoulder Press", "category": "shoulders", "equipment": "dumbbells", "targetRepRange": "10-12" },
+    { "name": "Lateral Raise", "category": "shoulders", "equipment": "dumbbells", "targetRepRange": "10-15" },
+    { "name": "Goblet Squat", "category": "legs", "equipment": "dumbbells", "targetRepRange": "12-20" },
+    { "name": "Bodyweight Squat", "category": "legs", "equipment": "bodyweight", "targetRepRange": "20-25" },
+    { "name": "Biceps Curl", "category": "arms", "equipment": "dumbbells", "targetRepRange": "8-12" },
+    { "name": "Push-Up", "category": "chest", "equipment": "bodyweight", "targetRepRange": "12-20" },
+    { "name": "Roman Chair Leg Raise", "category": "core", "equipment": "roman_chair", "targetRepRange": "12-15" },
+    { "name": "Leg Raise", "category": "core", "equipment": "bodyweight", "targetRepRange": "12-15" },
+    { "name": "Cable Fly", "category": "chest", "equipment": "cable_machine", "targetRepRange": "10-15" },
+    { "name": "Machine Row", "category": "back", "equipment": "machine", "targetRepRange": "10-12" }
+  ],
+  "workoutSessions": [
+    {
+      "id": "ws-2026-03-15",
+      "date": "2026-03-15",
+      "title": "Push / Pull / Legs / Core",
+      "source": "confirmed",
+      "exercises": [
+        { "id": "ex-2026-03-15-01", "name": "Lat Pulldown", "category": "back", "weightKg": 50, "sets": 3, "reps": 10, "setDetails": [10, 10, 10], "source": "confirmed" },
+        { "id": "ex-2026-03-15-02", "name": "One-Arm Dumbbell Row", "category": "back", "weightKg": 20, "sets": 1, "reps": 8, "setDetails": [8], "source": "confirmed" },
+        { "id": "ex-2026-03-15-03", "name": "One-Arm Dumbbell Row", "category": "back", "weightKg": 17.5, "sets": 2, "reps": 10, "setDetails": [10, 10], "source": "confirmed" },
+        { "id": "ex-2026-03-15-04", "name": "Incline Dumbbell Press", "category": "chest", "weightKg": 15, "sets": 1, "reps": 12, "setDetails": [12], "source": "confirmed" },
+        { "id": "ex-2026-03-15-05", "name": "Incline Dumbbell Press", "category": "chest", "weightKg": 17.5, "sets": 1, "reps": 10, "setDetails": [10], "source": "confirmed" },
+        { "id": "ex-2026-03-15-06", "name": "Incline Dumbbell Press", "category": "chest", "weightKg": 20, "sets": 1, "reps": 8, "setDetails": [8], "source": "confirmed" },
+        { "id": "ex-2026-03-15-07", "name": "Shoulder Press", "category": "shoulders", "weightKg": 12.5, "sets": 2, "reps": 12, "setDetails": [12, 12], "source": "confirmed" },
+        { "id": "ex-2026-03-15-08", "name": "Shoulder Press", "category": "shoulders", "weightKg": 15, "sets": 1, "reps": 10, "setDetails": [10], "source": "confirmed" },
+        { "id": "ex-2026-03-15-09", "name": "Goblet Squat", "category": "legs", "weightKg": 12.5, "sets": 1, "reps": 12, "setDetails": [12], "source": "confirmed" },
+        { "id": "ex-2026-03-15-10", "name": "Goblet Squat", "category": "legs", "weightKg": 15, "sets": 2, "reps": 12, "setDetails": [12, 12], "source": "confirmed" },
+        { "id": "ex-2026-03-15-11", "name": "Roman Chair Leg Raise", "category": "core", "weightKg": 0, "sets": 3, "reps": 12, "setDetails": [12, 12, 12], "source": "confirmed" }
+      ]
+    }
+  ]
+}
