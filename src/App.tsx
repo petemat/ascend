@@ -473,10 +473,11 @@ export default function App() {
           src={silhouette}
           alt=""
           onLoad={() => setBgLoaded(true)}
-          className="absolute left-1/2 top-[42%] w-[980px] max-w-none -translate-x-1/2 -translate-y-1/2"
+          className="absolute left-1/2 top-[46%] w-[980px] max-w-none -translate-x-1/2 -translate-y-1/2"
           style={{
-            opacity: debug ? 1 : 0.22,
-            filter: debug ? "none" : "blur(18px)",
+            // Normal mode must still be clearly perceptible.
+            opacity: debug ? 0.45 : 0.28,
+            filter: debug ? "blur(6px)" : "blur(14px)",
           }}
         />
       </div>
