@@ -22,6 +22,7 @@ type RunState = {
   currentReps: number;
   // collected
   results: Array<{ exId: string; repsBySet: number[]; weightKg: number }>;
+  startedAt: number | null;
 };
 
 function cn(...xs: Array<string | false | null | undefined>) {
@@ -217,9 +218,11 @@ function isoToday() {
 function WorkoutsView(props: {
   sessions: WorkoutSession[];
   onUpsertSession: (s: WorkoutSession) => void;
+  onDeleteSession: (id: string) => void;
 }) {
   const sessionsSorted = props.sessions.slice().sort((a, b) => String(b.date).localeCompare(String(a.date)));
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const selected = selectedId ? props.sessions.find((s) => s.id === selectedId) : null;
 
@@ -268,17 +271,28 @@ function WorkoutsView(props: {
   if (selected) {
     return (
       <div className="space-y-4">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start justify-between gap-3">
           <div>
             <div className="text-lg text-white/90 font-semibold">{selected.title}</div>
-            <div className="text-[12px] text-white/45 mt-1">{fmtDate(selected.date)} · {selected.exercises.length} exercises</div>
+            <div className="text-[12px] text-white/45 mt-1">
+              {fmtDate(selected.date)} · {selected.exercises.length} exercises
+              {typeof selected.durationSec === "number" ? ` · ${Math.round(selected.durationSec / 60)} min` : ""}
+            </div>
           </div>
-          <button
-            className="px-4 py-2 rounded-2xl border border-white/10 bg-white/[0.04] text-white/75 hover:text-white/90"
-            onClick={() => setSelectedId(null)}
-          >
-            Back
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              className="px-4 py-2 rounded-2xl border border-white/10 bg-white/[0.04] text-white/75 hover:text-white/90"
+              onClick={() => setSelectedId(null)}
+            >
+              Back
+            </button>
+            <button
+              className="px-4 py-2 rounded-2xl border border-white/10 bg-white/[0.04] text-white/65 hover:text-white/90"
+              onClick={() => setConfirmDelete(true)}
+            >
+              Delete
+            </button>
+          </div>
         </div>
 
         <Card title="Exercises">
@@ -357,6 +371,28 @@ function WorkoutsView(props: {
 
             <button className="w-full rounded-2xl py-3 border border-gold-300/30 bg-white/[0.06] text-gold-200 shadow-glow" onClick={addExercise}>
               Save
+            </button>
+          </div>
+        </Modal>
+
+        <Modal open={confirmDelete} onClose={() => setConfirmDelete(false)} title="Delete workout?">
+          <div className="text-sm text-white/70">This will remove the workout from history.</div>
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <button
+              className="rounded-2xl py-3 border border-white/10 bg-white/[0.04] text-white/75"
+              onClick={() => setConfirmDelete(false)}
+            >
+              Cancel
+            </button>
+            <button
+              className="rounded-2xl py-3 border border-white/10 bg-white/[0.04] text-white/90"
+              onClick={() => {
+                props.onDeleteSession(selected.id);
+                setConfirmDelete(false);
+                setSelectedId(null);
+              }}
+            >
+              Delete
             </button>
           </div>
         </Modal>
@@ -602,6 +638,13 @@ function PlanView(props: {
   );
 }
 
+function fmtElapsed(ms: number) {
+  const sec = Math.max(0, Math.floor(ms / 1000));
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
 function RunWorkoutModal(props: {
   run: RunState;
   onClose: () => void;
@@ -633,6 +676,9 @@ function RunWorkoutModal(props: {
 
     if (isLastSet && isLastEx) {
       // build WorkoutSession
+      const finishedAt = Date.now();
+      const startedAtMs = props.run.startedAt ?? finishedAt;
+
       const exercises: ExerciseSet[] = plannedLocal.exercises.map((p) => {
         const rr = results.find((r) => r.exId === p.id);
         const setDetails = rr?.repsBySet?.length ? rr.repsBySet : Array.from({ length: p.sets }, () => p.targetReps);
@@ -654,6 +700,9 @@ function RunWorkoutModal(props: {
         title: plannedLocal.title.replace(/^Next:\s*/i, ""),
         source: "confirmed",
         exercises,
+        startedAt: startedAtMs,
+        finishedAt,
+        durationSec: Math.max(0, Math.round((finishedAt - startedAtMs) / 1000)),
       };
 
       props.onFinish(session);
@@ -671,14 +720,22 @@ function RunWorkoutModal(props: {
         currentReps: nextEx.targetReps,
       });
     } else {
+      // Next set: keep what the user just used (weight + reps) to minimize re-entry.
       props.onUpdate({
         results,
         setIndex: props.run.setIndex + 1,
-        // keep weight, keep reps prefilled to target
-        currentReps: ex.targetReps,
+        currentWeightKg: props.run.currentWeightKg,
+        currentReps: props.run.currentReps,
       });
     }
   }
+
+  const startedAt = props.run.startedAt ?? Date.now();
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   return (
     <div className="fixed inset-0 z-[80]">
@@ -689,7 +746,7 @@ function RunWorkoutModal(props: {
             <div>
               <div className="text-sm text-white/85 font-semibold">{ex.name}</div>
               <div className="text-[11px] text-white/45 mt-1">
-                Set {setNo}/{ex.sets} · Exercise {props.run.exIndex + 1}/{planned.exercises.length}
+                Set {setNo}/{ex.sets} · Exercise {props.run.exIndex + 1}/{plannedLocal.exercises.length} · {fmtElapsed(now - startedAt)}
               </div>
             </div>
             <button className="text-white/55 hover:text-white/80" onClick={props.onClose}>
@@ -737,6 +794,7 @@ export default function App() {
     currentWeightKg: 0,
     currentReps: 10,
     results: [],
+    startedAt: null,
   });
 
   useEffect(() => {
@@ -797,6 +855,12 @@ export default function App() {
                   return { ...prev, workoutSessions: next };
                 })
               }
+              onDeleteSession={(id) =>
+                setState((prev) => ({
+                  ...prev,
+                  workoutSessions: prev.workoutSessions.filter((s) => s.id !== id),
+                }))
+              }
             />
           )}
           {tab === "progress" && <ProgressView />}
@@ -814,6 +878,7 @@ export default function App() {
                   currentWeightKg: p.exercises[0]?.weightKg ?? 0,
                   currentReps: p.exercises[0]?.targetReps ?? 10,
                   results: [],
+                  startedAt: Date.now(),
                 })
               }
             />
@@ -841,6 +906,7 @@ export default function App() {
             currentWeightKg: 0,
             currentReps: 10,
             results: [],
+            startedAt: null,
           });
           setTab("workouts");
         }}

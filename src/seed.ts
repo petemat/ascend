@@ -43,6 +43,10 @@ export type WorkoutSession = {
   title: string;
   source?: "confirmed" | "inferred" | "estimated";
   exercises: ExerciseSet[];
+  // optional runtime metadata
+  durationSec?: number;
+  startedAt?: number;
+  finishedAt?: number;
 };
 
 export type AscendSeed = {
