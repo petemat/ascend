@@ -660,11 +660,26 @@ function PlanView(props: {
   plannedWorkout: PlannedWorkout | null | undefined;
   onPlan: (p: PlannedWorkout) => void;
   onStart: (p: PlannedWorkout) => void;
+  onResume: () => void;
+  hasResume: boolean;
 }) {
   const planned = props.plannedWorkout ?? null;
   return (
     <div className="space-y-4">
       <div className="text-lg text-white/90 font-semibold">Progression / Plan</div>
+
+      {props.hasResume ? (
+        <Card title="In Progress">
+          <div className="text-sm text-white/90 font-medium">Workout in progress</div>
+          <div className="text-[12px] text-white/45 mt-1">Resume where you left off.</div>
+          <button
+            className="mt-4 w-full rounded-2xl py-3 border border-gold-300/30 bg-white/[0.06] text-gold-200 shadow-glow"
+            onClick={props.onResume}
+          >
+            Resume
+          </button>
+        </Card>
+      ) : null}
 
       <Card title="Next Workout">
         <div className="text-sm text-white/90 font-medium">{planned ? planned.title : "No plan yet"}</div>
@@ -966,17 +981,44 @@ export default function App() {
   const [bgLoaded, setBgLoaded] = useState(false);
   const debug = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("debug") === "1";
 
-  const [run, setRun] = useState<RunState>({
-    open: false,
-    planned: null,
-    exIndex: 0,
-    setIndex: 0,
-    currentWeightKg: 0,
-    currentReps: 10,
-    results: [],
-    startedAt: null,
-    rest: null,
+  const RUN_STORAGE_KEY = "ascend.run.v1";
+  const [run, setRun] = useState<RunState>(() => {
+    try {
+      const raw = localStorage.getItem(RUN_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return {
+          open: false, // never auto-open modal
+          planned: parsed?.planned ?? null,
+          exIndex: parsed?.exIndex ?? 0,
+          setIndex: parsed?.setIndex ?? 0,
+          currentWeightKg: parsed?.currentWeightKg ?? 0,
+          currentReps: parsed?.currentReps ?? 10,
+          results: Array.isArray(parsed?.results) ? parsed.results : [],
+          startedAt: parsed?.startedAt ?? null,
+          rest: parsed?.rest ?? null,
+        } as RunState;
+      }
+    } catch {}
+    return {
+      open: false,
+      planned: null,
+      exIndex: 0,
+      setIndex: 0,
+      currentWeightKg: 0,
+      currentReps: 10,
+      results: [],
+      startedAt: null,
+      rest: null,
+    };
   });
+
+  useEffect(() => {
+    try {
+      const { open, ...persist } = run;
+      localStorage.setItem(RUN_STORAGE_KEY, JSON.stringify(persist));
+    } catch {}
+  }, [run]);
 
   useEffect(() => {
     saveState(state);
@@ -1017,10 +1059,8 @@ export default function App() {
       ) : null}
 
       <div className="relative z-20 mx-auto max-w-[520px] px-4 pt-6 pb-28">
-        <div className="flex items-center justify-between">
-          <button className="w-10 h-10 rounded-2xl border border-white/10 bg-white/[0.04] text-white/75">←</button>
+        <div className="flex items-center justify-center">
           <div className="text-sm text-white/80 font-semibold">{tab === "dashboard" ? "Dashboard" : tab === "workouts" ? "Workout History" : tab === "progress" ? "Progress" : "Progression / Plan"}</div>
-          <div className="w-10 h-10" />
         </div>
 
         <div className="mt-6">
@@ -1050,6 +1090,8 @@ export default function App() {
               sessions={sessions}
               plannedWorkout={state.plannedWorkout}
               onPlan={(p) => setState((prev) => ({ ...prev, plannedWorkout: p }))}
+              hasResume={!!run.planned}
+              onResume={() => setRun((prev) => ({ ...prev, open: true }))}
               onStart={(p) =>
                 setRun({
                   open: true,
@@ -1061,7 +1103,7 @@ export default function App() {
                   results: [],
                   startedAt: Date.now(),
                   rest: null,
-                })
+                } as RunState)
               }
             />
           )}
@@ -1091,6 +1133,9 @@ export default function App() {
             startedAt: null,
             rest: null,
           });
+          try {
+            localStorage.removeItem("ascend.run.v1");
+          } catch {}
           setTab("workouts");
         }}
       />
