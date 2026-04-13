@@ -88,9 +88,15 @@ export function loadState(): AscendState {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
+      const stored = Array.isArray(parsed?.workoutSessions) ? parsed.workoutSessions : [];
+      // Merge seed sessions in (by id) so new seed workouts appear without wiping local progress.
+      const byId = new Map<string, WorkoutSession>();
+      for (const s of seed.workoutSessions) byId.set(s.id, s);
+      for (const s of stored) if (s?.id) byId.set(s.id, s);
+
       return {
         unitSystem: parsed?.unitSystem ?? seed.meta.unitSystem,
-        workoutSessions: Array.isArray(parsed?.workoutSessions) ? parsed.workoutSessions : seed.workoutSessions,
+        workoutSessions: Array.from(byId.values()),
         plannedWorkout: parsed?.plannedWorkout ?? null,
       };
     }

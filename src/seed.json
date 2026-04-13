@@ -142,6 +142,21 @@
         { "id": "ex-2026-04-11-08", "name": "Leg Raise", "category": "core", "weightKg": 0, "sets": 3, "reps": 15, "setDetails": [15, 15, 15], "source": "confirmed" },
         { "id": "ex-2026-04-11-09", "name": "Push-Up", "category": "chest", "weightKg": 0, "sets": 2, "reps": 20, "setDetails": [20, 20], "totalReps": 40, "source": "estimated" }
       ]
+    },
+    {
+      "id": "ws-2026-04-12",
+      "date": "2026-04-12",
+      "title": "Pull / Arms / Core",
+      "source": "confirmed",
+      "exercises": [
+        { "id": "ex-2026-04-12-01", "name": "Lat Pulldown", "category": "back", "weightKg": 50, "sets": 1, "reps": 12, "setDetails": [12], "source": "confirmed" },
+        { "id": "ex-2026-04-12-02", "name": "Lat Pulldown", "category": "back", "weightKg": 55, "sets": 2, "reps": 10, "setDetails": [10, 10], "source": "confirmed" },
+        { "id": "ex-2026-04-12-03", "name": "Face Pull", "category": "shoulders", "weightKg": 25, "sets": 3, "reps": 12, "setDetails": [12, 12, 12], "source": "confirmed" },
+        { "id": "ex-2026-04-12-04", "name": "One-Arm Dumbbell Row", "category": "back", "weightKg": 17.5, "sets": 3, "reps": 12, "setDetails": [12, 10, 10], "source": "confirmed" },
+        { "id": "ex-2026-04-12-05", "name": "Biceps Curl", "category": "arms", "weightKg": 12.5, "sets": 3, "reps": 12, "setDetails": [12, 10, 10], "source": "confirmed" },
+        { "id": "ex-2026-04-12-06", "name": "Leg Raise", "category": "core", "weightKg": 0, "sets": 3, "reps": 15, "setDetails": [15, 15, 15], "source": "confirmed" },
+        { "id": "ex-2026-04-12-07", "name": "Plank", "category": "core", "weightKg": 0, "sets": 3, "reps": 45, "setDetails": [45, 45, 60], "weightNote": "seconds", "source": "confirmed" }
+      ]
     }
   ]
 }
