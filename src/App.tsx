@@ -569,23 +569,83 @@ function computeNextWorkout(sessions: WorkoutSession[]): PlannedWorkout {
 }
 
 function WheelPicker(props: { value: number; options: number[]; onChange: (v: number) => void; label: string }) {
+  const itemH = 40;
+  const pad = 60; // makes the selected item sit between the two lines (center window)
+  const ref = useState<{ el: HTMLDivElement | null }>({ el: null })[0];
+  const snapTimer = useState<{ t: any }>({ t: null })[0];
+
+  function clampIdx(idx: number) {
+    return Math.max(0, Math.min(props.options.length - 1, idx));
+  }
+
+  function setIdx(idx: number, snap: boolean) {
+    const i = clampIdx(idx);
+    const v = props.options[i];
+    props.onChange(v);
+    if (snap && ref.el) {
+      ref.el.scrollTo({ top: i * itemH, behavior: "smooth" });
+    }
+  }
+
+  // Keep scroll position aligned to the controlled value.
+  useEffect(() => {
+    const el = ref.el;
+    if (!el) return;
+    const idx = Math.max(0, props.options.indexOf(props.value));
+    const targetTop = idx * itemH;
+    // Only adjust if we're far off (avoid fighting user scroll)
+    if (Math.abs(el.scrollTop - targetTop) > itemH * 0.6) {
+      el.scrollTo({ top: targetTop, behavior: "auto" });
+    }
+  }, [props.value, props.options]);
+
   return (
     <div className="flex-1">
       <div className="text-[11px] text-white/45 mb-2">{props.label}</div>
       <div className="relative rounded-2xl border border-white/10 bg-white/[0.04] overflow-hidden">
         <div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 h-10 border-y border-gold-300/25 bg-white/[0.02]" />
         <div
-          className="h-40 overflow-y-auto snap-y snap-mandatory px-2 py-8"
+          ref={(el) => {
+            ref.el = el;
+          }}
+          className="h-40 overflow-y-auto snap-y snap-mandatory px-2"
+          style={{
+            paddingTop: pad,
+            paddingBottom: pad,
+            scrollPaddingTop: pad,
+            scrollPaddingBottom: pad,
+          }}
           onScroll={(e) => {
             const el = e.currentTarget;
-            const itemH = 40;
             const idx = Math.round(el.scrollTop / itemH);
-            const v = props.options[Math.max(0, Math.min(props.options.length - 1, idx))];
-            props.onChange(v);
+            setIdx(idx, false);
+
+            // magnetic snap after user stops scrolling
+            if (snapTimer.t) clearTimeout(snapTimer.t);
+            snapTimer.t = setTimeout(() => {
+              const idx2 = Math.round(el.scrollTop / itemH);
+              setIdx(idx2, true);
+            }, 140);
+          }}
+          onTouchEnd={(e) => {
+            const el = e.currentTarget;
+            const idx = Math.round(el.scrollTop / itemH);
+            setIdx(idx, true);
+          }}
+          onMouseUp={(e) => {
+            const el = e.currentTarget;
+            const idx = Math.round(el.scrollTop / itemH);
+            setIdx(idx, true);
           }}
         >
           {props.options.map((o) => (
-            <div key={o} className={cn("h-10 snap-start flex items-center justify-center text-sm", o === props.value ? "text-gold-200" : "text-white/65")}>
+            <div
+              key={o}
+              className={cn(
+                "h-10 snap-center flex items-center justify-center text-sm",
+                o === props.value ? "text-gold-200" : "text-white/65"
+              )}
+            >
               {o}
             </div>
           ))}
