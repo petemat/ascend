@@ -136,7 +136,7 @@ function isoDate(d: Date) {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-function MiniCalendar(props: { sessions: WorkoutSession[] }) {
+function MiniCalendar(props: { sessions: WorkoutSession[]; onPickDate?: (iso: string) => void }) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -178,17 +178,24 @@ function MiniCalendar(props: { sessions: WorkoutSession[] }) {
         {days.map((d) => {
           const isToday = d.getTime() === today.getTime();
           const inMonth = d.getMonth() === today.getMonth();
-          const hasWorkout = workoutDays.has(isoDate(d));
+          const dayIso = isoDate(d);
+          const hasWorkout = workoutDays.has(dayIso);
 
           return (
-            <div key={d.toISOString()} className="flex flex-col items-center">
+            <button
+              key={d.toISOString()}
+              type="button"
+              className="flex flex-col items-center"
+              onClick={() => props.onPickDate?.(dayIso)}
+            >
               <div
                 className={cn(
                   "w-9 h-9 rounded-2xl flex items-center justify-center text-sm tabular-nums",
                   isToday
                     ? "border border-gold-300/35 bg-white/[0.06] text-white/90 shadow-glow"
                     : "border border-transparent",
-                  inMonth ? "text-white/85" : "text-white/35"
+                  inMonth ? "text-white/85" : "text-white/35",
+                  hasWorkout ? "" : "hover:bg-white/[0.03]"
                 )}
               >
                 {d.getDate()}
@@ -196,7 +203,7 @@ function MiniCalendar(props: { sessions: WorkoutSession[] }) {
               <div className="h-2 mt-1 flex items-center justify-center">
                 {hasWorkout ? <div className="w-2 h-2 rounded-full bg-gold-300/80" /> : <div className="w-2 h-2" />}
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
@@ -204,7 +211,7 @@ function MiniCalendar(props: { sessions: WorkoutSession[] }) {
   );
 }
 
-function DashboardView(props: { sessions: WorkoutSession[] }) {
+function DashboardView(props: { sessions: WorkoutSession[]; onPickDate?: (iso: string) => void }) {
   const sessions = props.sessions;
 
   const last = sessions.slice().sort((a, b) => String(b.date).localeCompare(String(a.date)))[0];
@@ -217,7 +224,7 @@ function DashboardView(props: { sessions: WorkoutSession[] }) {
 
   return (
     <div className="space-y-4">
-      <MiniCalendar sessions={sessions} />
+      <MiniCalendar sessions={sessions} onPickDate={props.onPickDate} />
 
       <div className="flex items-center justify-between">
         <div>
@@ -393,14 +400,15 @@ function isoToday() {
 
 function WorkoutsView(props: {
   sessions: WorkoutSession[];
+  selectedId: string | null;
+  onSelectId: (id: string | null) => void;
   onUpsertSession: (s: WorkoutSession) => void;
   onDeleteSession: (id: string) => void;
 }) {
   const sessionsSorted = props.sessions.slice().sort((a, b) => String(b.date).localeCompare(String(a.date)));
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const selected = selectedId ? props.sessions.find((s) => s.id === selectedId) : null;
+  const selected = props.selectedId ? props.sessions.find((s) => s.id === props.selectedId) : null;
 
   const [createOpen, setCreateOpen] = useState(false);
   const [draftTitle, setDraftTitle] = useState("Strength Training");
@@ -425,7 +433,7 @@ function WorkoutsView(props: {
       exercises: [],
     };
     saveSession(s);
-    setSelectedId(s.id);
+    props.onSelectId(s.id);
     setCreateOpen(false);
   }
 
@@ -458,7 +466,7 @@ function WorkoutsView(props: {
           <div className="flex items-center gap-2">
             <button
               className="px-4 py-2 rounded-2xl border border-white/10 bg-white/[0.04] text-white/75 hover:text-white/90"
-              onClick={() => setSelectedId(null)}
+              onClick={() => props.onSelectId(null)}
             >
               Back
             </button>
@@ -569,7 +577,7 @@ function WorkoutsView(props: {
               onClick={() => {
                 props.onDeleteSession(selected.id);
                 setConfirmDelete(false);
-                setSelectedId(null);
+                props.onSelectId(null);
               }}
             >
               Delete
@@ -594,7 +602,7 @@ function WorkoutsView(props: {
 
       <div className="space-y-3">
         {sessionsSorted.map((s) => (
-          <button key={s.id} className="w-full text-left" onClick={() => setSelectedId(s.id)}>
+          <button key={s.id} className="w-full text-left" onClick={() => props.onSelectId(s.id)}>
             <Card>
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -1146,6 +1154,7 @@ export default function App() {
   const [tab, setTab] = useState<Tab>("dashboard");
   const [state, setState] = useState<AscendState>(() => loadState());
   const [successSession, setSuccessSession] = useState<WorkoutSession | null>(null);
+  const [workoutsSelectedId, setWorkoutsSelectedId] = useState<string | null>(null);
   const [bgLoaded, setBgLoaded] = useState(false);
   const debug = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("debug") === "1";
 
@@ -1232,10 +1241,24 @@ export default function App() {
         </div>
 
         <div className="mt-6">
-          {tab === "dashboard" && <DashboardView sessions={sessions} />}
+          {tab === "dashboard" && (
+            <DashboardView
+              sessions={sessions}
+              onPickDate={(iso) => {
+                const match = sessions
+                  .filter((s) => s.date === iso)
+                  .slice()
+                  .sort((a, b) => String(b.id).localeCompare(String(a.id)))[0];
+                if (match) setWorkoutsSelectedId(match.id);
+                setTab("workouts");
+              }}
+            />
+          )}
           {tab === "workouts" && (
             <WorkoutsView
               sessions={sessions}
+              selectedId={workoutsSelectedId}
+              onSelectId={setWorkoutsSelectedId}
               onUpsertSession={(s) =>
                 setState((prev) => {
                   const next = prev.workoutSessions.some((x) => x.id === s.id)
