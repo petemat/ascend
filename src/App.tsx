@@ -281,6 +281,84 @@ function Modal(props: { open: boolean; onClose: () => void; title: string; child
   );
 }
 
+function WorkoutSuccessScreen(props: {
+  session: WorkoutSession | null;
+  onClose: () => void;
+  onGoWorkouts: () => void;
+  onGoDashboard: () => void;
+}) {
+  const s = props.session;
+  if (!s) return null;
+
+  const mins = typeof s.durationSec === "number" ? Math.max(1, Math.round(s.durationSec / 60)) : null;
+
+  return (
+    <div className="fixed inset-0 z-[70]">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={props.onClose} />
+
+      <div className="absolute left-0 right-0 top-0 bottom-0 mx-auto max-w-[520px] px-4 py-10">
+        <div className="h-full flex items-center justify-center">
+          <div className="w-full rounded-[32px] border border-white/10 bg-black/60 backdrop-blur-2xl shadow-card overflow-hidden">
+            <div className="p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-white/[0.06] border border-gold-300/25 shadow-glow flex items-center justify-center">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M20 6L9 17l-5-5" stroke="rgba(241,195,93,0.95)" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-lg text-white/90 font-semibold">Workout completed</div>
+                    <div className="text-[12px] text-white/45 mt-0.5">{fmtDate(s.date)} · {s.title}</div>
+                  </div>
+                </div>
+                <button className="text-white/55 hover:text-white/80" onClick={props.onClose}>
+                  Close
+                </button>
+              </div>
+
+              <div className="mt-5 grid grid-cols-3 gap-2">
+                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
+                  <div className="text-[10px] text-white/40">Duration</div>
+                  <div className="text-sm text-white/85 font-semibold tabular-nums">{mins ? `${mins} min` : "—"}</div>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
+                  <div className="text-[10px] text-white/40">Exercises</div>
+                  <div className="text-sm text-white/85 font-semibold tabular-nums">{s.exercises.length}</div>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
+                  <div className="text-[10px] text-white/40">Sets</div>
+                  <div className="text-sm text-white/85 font-semibold tabular-nums">
+                    {s.exercises.reduce((sum, e) => sum + (e.setDetails?.length ?? e.sets ?? 0), 0)}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5">
+                <div className="text-[12px] text-white/55 mb-2">Nice work. Keep the streak alive.</div>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    className="rounded-2xl py-3 border border-white/10 bg-white/[0.04] text-white/80 hover:bg-white/[0.06]"
+                    onClick={props.onGoDashboard}
+                  >
+                    Back to Dashboard
+                  </button>
+                  <button
+                    className="rounded-2xl py-3 border border-gold-300/30 bg-white/[0.06] text-gold-200 shadow-glow"
+                    onClick={props.onGoWorkouts}
+                  >
+                    View in History
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function uid(prefix: string) {
   return `${prefix}-${Math.random().toString(16).slice(2)}-${Date.now().toString(16)}`;
 }
@@ -1067,6 +1145,7 @@ function RunWorkoutModal(props: {
 export default function App() {
   const [tab, setTab] = useState<Tab>("dashboard");
   const [state, setState] = useState<AscendState>(() => loadState());
+  const [successSession, setSuccessSession] = useState<WorkoutSession | null>(null);
   const [bgLoaded, setBgLoaded] = useState(false);
   const debug = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("debug") === "1";
 
@@ -1225,6 +1304,19 @@ export default function App() {
           try {
             localStorage.removeItem("ascend.run.v1");
           } catch {}
+          setSuccessSession(session);
+        }}
+      />
+
+      <WorkoutSuccessScreen
+        session={successSession}
+        onClose={() => setSuccessSession(null)}
+        onGoDashboard={() => {
+          setSuccessSession(null);
+          setTab("dashboard");
+        }}
+        onGoWorkouts={() => {
+          setSuccessSession(null);
           setTab("workouts");
         }}
       />
