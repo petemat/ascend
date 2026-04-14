@@ -121,6 +121,89 @@ function BottomNav(props: { tab: Tab; onTab: (t: Tab) => void }) {
   );
 }
 
+function startOfWeekMonday(d: Date) {
+  const x = new Date(d);
+  const day = (x.getDay() + 6) % 7; // Mon=0
+  x.setHours(0, 0, 0, 0);
+  x.setDate(x.getDate() - day);
+  return x;
+}
+
+function isoDate(d: Date) {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function MiniCalendar(props: { sessions: WorkoutSession[] }) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const workoutDays = new Set(props.sessions.map((s) => s.date));
+
+  const start = startOfWeekMonday(today);
+  start.setDate(start.getDate() - 7 * 3); // show current + last 3 weeks
+
+  const days: Date[] = [];
+  for (let i = 0; i < 28; i++) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    days.push(d);
+  }
+
+  const labels = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+
+  return (
+    <Card>
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="text-[13px] text-white/70 font-semibold">Training</div>
+          <div className="text-[11px] text-white/35">
+            {today.toLocaleDateString(undefined, { month: "long", year: "numeric" })}
+          </div>
+        </div>
+        <div className="text-[11px] px-2 py-1 rounded-full border border-white/10 bg-white/5 text-white/65">
+          4w
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-7 gap-y-2">
+        {labels.map((l) => (
+          <div key={l} className="text-[10px] text-white/35 text-center">
+            {l}
+          </div>
+        ))}
+
+        {days.map((d) => {
+          const isToday = d.getTime() === today.getTime();
+          const inMonth = d.getMonth() === today.getMonth();
+          const hasWorkout = workoutDays.has(isoDate(d));
+
+          return (
+            <div key={d.toISOString()} className="flex flex-col items-center">
+              <div
+                className={cn(
+                  "w-9 h-9 rounded-2xl flex items-center justify-center text-sm tabular-nums",
+                  isToday
+                    ? "border border-gold-300/35 bg-white/[0.06] text-white/90 shadow-glow"
+                    : "border border-transparent",
+                  inMonth ? "text-white/85" : "text-white/35"
+                )}
+              >
+                {d.getDate()}
+              </div>
+              <div className="h-2 mt-1 flex items-center justify-center">
+                {hasWorkout ? <div className="w-2 h-2 rounded-full bg-gold-300/80" /> : <div className="w-2 h-2" />}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
 function DashboardView(props: { sessions: WorkoutSession[] }) {
   const sessions = props.sessions;
 
@@ -134,6 +217,8 @@ function DashboardView(props: { sessions: WorkoutSession[] }) {
 
   return (
     <div className="space-y-4">
+      <MiniCalendar sessions={sessions} />
+
       <div className="flex items-center justify-between">
         <div>
           <div className="text-[13px] text-white/55">Strength Progress</div>
