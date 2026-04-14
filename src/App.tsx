@@ -313,7 +313,9 @@ function WorkoutsView(props: {
             <div className="space-y-3">
               {selected.exercises.map((e) => {
                 const weightLabel = e.weightKg === 0 ? "BW" : `${e.weightKg} kg`;
-                const repsLabel = e.setDetails?.length ? e.setDetails.join(" · ") : `${e.reps}`;
+                const isTimed = (e.weightNote ?? "").toLowerCase().includes("sec");
+                const details = e.setDetails?.length ? e.setDetails : Array.from({ length: e.sets }, () => e.reps);
+                const setLabel = details.join(" · ");
                 return (
                   <div key={e.id} className="flex items-start justify-between gap-4">
                     <div>
@@ -322,7 +324,9 @@ function WorkoutsView(props: {
                         {weightLabel}
                         {e.weightNote ? ` (${e.weightNote})` : ""} · {e.sets} sets
                       </div>
-                      <div className="text-[12px] text-white/45 mt-1">Reps: {repsLabel}</div>
+                      <div className="text-[12px] text-white/45 mt-1">
+                        {isTimed ? `Time: ${setLabel}s` : `Reps: ${setLabel}`}
+                      </div>
                     </div>
                     <div className="text-[11px] text-white/35">{e.source ?? "logged"}</div>
                   </div>
