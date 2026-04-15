@@ -1203,6 +1203,17 @@ export default function App() {
 
   const sessions = state.workoutSessions;
 
+  const swipe = useState<{ x: number; y: number; t: number; active: boolean }>({ x: 0, y: 0, t: 0, active: false })[0];
+  const tabOrder: Tab[] = ["dashboard", "workouts", "progress", "plan"];
+
+  function shiftTab(delta: number) {
+    const i = tabOrder.indexOf(tab);
+    const j = Math.max(0, Math.min(tabOrder.length - 1, i + delta));
+    if (j !== i) setTab(tabOrder[j]!);
+  }
+
+  const overlaysOpen = run.open || !!successSession; // if overlays are up, avoid accidental navigation
+
   return (
     <div className="min-h-screen bg-noir-950">
       {/* Background silhouette: render as <img> (more reliable on mobile than filtered background-image) */}
@@ -1242,7 +1253,37 @@ export default function App() {
           </div>
         </div>
 
-        <div className="mt-6">
+        <div
+          className="mt-6"
+          onTouchStart={(e) => {
+            if (overlaysOpen) return;
+            const t = e.touches[0];
+            if (!t) return;
+            swipe.x = t.clientX;
+            swipe.y = t.clientY;
+            swipe.t = Date.now();
+            swipe.active = true;
+          }}
+          onTouchEnd={(e) => {
+            if (overlaysOpen) return;
+            if (!swipe.active) return;
+            swipe.active = false;
+
+            const t = e.changedTouches[0];
+            if (!t) return;
+            const dx = t.clientX - swipe.x;
+            const dy = t.clientY - swipe.y;
+            const dt = Date.now() - swipe.t;
+
+            // Horizontal swipe: avoid triggering during vertical scroll.
+            if (dt > 700) return;
+            if (Math.abs(dx) < 60) return;
+            if (Math.abs(dx) < Math.abs(dy) * 1.2) return;
+
+            if (dx < 0) shiftTab(+1); // swipe left -> next
+            else shiftTab(-1); // swipe right -> prev
+          }}
+        >
           {tab === "dashboard" && (
             <DashboardView
               sessions={sessions}
