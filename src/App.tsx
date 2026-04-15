@@ -1236,30 +1236,10 @@ export default function App() {
       ) : null}
 
       <div className="relative z-20 mx-auto max-w-[520px] px-4 pt-6 pb-28">
-        <div className="flex items-center justify-between">
-          <div className="w-10" />
+        <div className="flex items-center justify-center">
           <div className="text-sm text-white/80 font-semibold">
             {tab === "dashboard" ? "Dashboard" : tab === "workouts" ? "Workout History" : tab === "progress" ? "Progress" : "Progression / Plan"}
           </div>
-          <button
-            className="w-10 h-10 rounded-2xl border border-white/10 bg-white/[0.04] text-white/70 hover:text-white/90"
-            onClick={async () => {
-              try {
-                if (document.fullscreenElement) {
-                  await document.exitFullscreen();
-                  return;
-                }
-                await document.documentElement.requestFullscreen();
-              } catch {
-                // Mobile Safari / some Chrome contexts block programmatic fullscreen.
-                // We keep it silent (no toast system yet).
-              }
-            }}
-            aria-label="Toggle fullscreen"
-            title="Fullscreen"
-          >
-            <span className="text-[16px] leading-none">⤢</span>
-          </button>
         </div>
 
         <div className="mt-6">
