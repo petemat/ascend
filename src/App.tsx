@@ -294,6 +294,60 @@ function Modal(props: { open: boolean; onClose: () => void; title: string; child
   );
 }
 
+function ConfirmDialog(props: {
+  open: boolean;
+  title: string;
+  body: string;
+  primaryText: string;
+  onPrimary: () => void;
+  secondaryText?: string;
+  onSecondary?: () => void;
+  cancelText?: string;
+  onCancel: () => void;
+}) {
+  if (!props.open) return null;
+  return (
+    <div className="fixed inset-0 z-[90]">
+      <div className="absolute inset-0 bg-black/70" onClick={props.onCancel} />
+      <div className="absolute left-0 right-0 bottom-0 mx-auto max-w-[520px] px-4 pb-28">
+        <div className="rounded-3xl border border-white/10 bg-black/60 backdrop-blur-2xl shadow-card overflow-hidden">
+          <div className="px-5 pt-4 pb-3 flex items-center justify-between">
+            <div className="text-sm text-white/85 font-semibold">{props.title}</div>
+            <button className="text-white/55 hover:text-white/80" onClick={props.onCancel}>
+              Close
+            </button>
+          </div>
+          <div className="px-5 pb-5">
+            <div className="text-sm text-white/70">{props.body}</div>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <button
+                className="rounded-2xl py-3 border border-white/10 bg-white/[0.04] text-white/75"
+                onClick={props.onCancel}
+              >
+                {props.cancelText ?? "Cancel"}
+              </button>
+              <button
+                className="rounded-2xl py-3 border border-gold-300/30 bg-white/[0.06] text-gold-200 shadow-glow"
+                onClick={props.onPrimary}
+              >
+                {props.primaryText}
+              </button>
+            </div>
+            {props.secondaryText && props.onSecondary ? (
+              <button
+                className="mt-3 w-full rounded-2xl py-3 border border-white/10 bg-white/[0.04] text-white/70"
+                onClick={props.onSecondary}
+              >
+                {props.secondaryText}
+              </button>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function WorkoutSuccessScreen(props: {
   session: WorkoutSession | null;
   onClose: () => void;
@@ -1009,6 +1063,7 @@ function RunWorkoutModal(props: {
   onClose: () => void;
   onUpdate: (patch: Partial<RunState>) => void;
   onFinish: (session: WorkoutSession) => void;
+  onDiscard: () => void;
 }) {
   const planned = props.run.planned;
   if (!props.run.open || !planned) return null;
@@ -1020,6 +1075,45 @@ function RunWorkoutModal(props: {
 
   const weightOpts = weightOptions(ex.weightKg, 2.5, 8);
   const repsOpts = repsOptions(30);
+
+  const [confirmExit, setConfirmExit] = useState(false);
+
+  function finishNow() {
+    const finishedAt = Date.now();
+    const startedAtMs = props.run.startedAt ?? finishedAt;
+
+    // Build exercises: for partial workouts, only include logged reps where available.
+    const exercises: ExerciseSet[] = plannedLocal.exercises
+      .map((p) => {
+        const rr = props.run.results.find((r) => r.exId === p.id);
+        const setDetails = rr?.repsBySet?.length ? rr.repsBySet : [];
+        if (!setDetails.length) return null;
+        return {
+          id: uid("ex"),
+          name: p.name,
+          category: p.category,
+          weightKg: rr ? rr.weightKg : p.weightKg,
+          sets: setDetails.length,
+          reps: setDetails[0] ?? p.targetReps,
+          setDetails,
+          source: "confirmed",
+        } as ExerciseSet;
+      })
+      .filter(Boolean) as ExerciseSet[];
+
+    const session: WorkoutSession = {
+      id: uid("ws"),
+      date: plannedLocal.date,
+      title: plannedLocal.title.replace(/^Next:\s*/i, ""),
+      source: exercises.length ? "confirmed" : "estimated",
+      exercises,
+      startedAt: startedAtMs,
+      finishedAt,
+      durationSec: Math.max(0, Math.round((finishedAt - startedAtMs) / 1000)),
+    };
+
+    props.onFinish(session);
+  }
 
   function next() {
     // prevent double-actions while resting
@@ -1121,88 +1215,138 @@ function RunWorkoutModal(props: {
 
   return (
     <div className="fixed inset-0 z-[80]">
-      <div className="absolute inset-0 bg-black/70" onClick={props.onClose} />
+      <div className="absolute inset-0 bg-black/70" onClick={() => setConfirmExit(true)} />
       <div className="absolute left-0 right-0 bottom-0 mx-auto max-w-[520px] px-4 pb-28">
         <div className="rounded-3xl border border-white/10 bg-black/60 backdrop-blur-2xl shadow-card overflow-hidden">
-          <div className="px-5 pt-4 pb-3 flex items-center justify-between">
-            <div>
-              <div className="text-sm text-white/85 font-semibold">{ex.name}</div>
-              <div className="text-[11px] text-white/45 mt-1">
-                Set {setNo}/{ex.sets} · Step {props.run.seqIndex + 1}/{props.run.sequence.length} · {fmtElapsed(now - startedAt)}
+          <div className="px-5 pt-4 pb-3 flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-[10px] text-white/45 tracking-wide">
+                {ex.supersetId ? `Superset ${ex.supersetId}` : "Exercise"} · Set {setNo}/{ex.sets} · Step {props.run.seqIndex + 1}/{props.run.sequence.length}
               </div>
+              <div className="text-base text-white/90 font-semibold mt-1 truncate">{ex.name}</div>
+              {(() => {
+                const nextStep = props.run.sequence[props.run.seqIndex + 1];
+                const nextEx = nextStep ? plannedLocal.exercises.find((x) => x.id === nextStep.exId) : null;
+                if (!nextEx) return null;
+                return (
+                  <div className="text-[11px] text-white/40 mt-1 truncate">
+                    Next: {nextEx.name}
+                    {nextEx.supersetId ? ` (Superset ${nextEx.supersetId})` : ""}
+                  </div>
+                );
+              })()}
             </div>
-            <button className="text-white/55 hover:text-white/80" onClick={props.onClose}>
+            <button className="text-white/55 hover:text-white/80" onClick={() => setConfirmExit(true)}>
               Exit
             </button>
           </div>
 
-          <div className="px-5 pb-5">
-            {props.run.rest ? (
-              (() => {
-                const remainingSec = Math.max(0, Math.ceil((props.run.rest!.untilMs - now) / 1000));
-                const pct = props.run.rest!.totalSec ? remainingSec / props.run.rest!.totalSec : 0;
-                return (
-                  <div>
-                    <div className="text-[11px] text-white/45 mb-2">Rest ({props.run.rest!.kind})</div>
-                    <div className="text-5xl font-semibold tracking-tight tabular-nums text-white/90">
-                      {fmtClock(remainingSec)}
-                    </div>
-                    <div className="mt-4 h-2 rounded-full bg-white/10 overflow-hidden">
-                      <div
-                        className="h-full bg-gold-300/70"
-                        style={{ width: `${Math.max(0, Math.min(1, pct)) * 100}%` }}
-                      />
-                    </div>
-                    <div className="mt-4 grid grid-cols-3 gap-2">
-                      <button
-                        className="rounded-2xl py-3 border border-white/10 bg-white/[0.04] text-white/75"
-                        onClick={() => {
-                          const rest = props.run.rest!;
-                          props.onUpdate({
-                            rest: null,
-                            seqIndex: rest.advance.seqIndex,
-                            currentWeightKg: rest.advance.currentWeightKg,
-                            currentReps: rest.advance.currentReps,
-                            results: rest.advance.results,
-                          });
-                        }}
-                      >
-                        Skip
-                      </button>
-                      <button
-                        className="rounded-2xl py-3 border border-white/10 bg-white/[0.04] text-white/75"
-                        onClick={() => {
-                          const rest = props.run.rest!;
-                          props.onUpdate({
-                            rest: {
-                              ...rest,
-                              totalSec: rest.totalSec + 15,
-                              untilMs: rest.untilMs + 15000,
-                            },
-                          });
-                        }}
-                      >
-                        +15s
-                      </button>
-                      <button
-                        className="rounded-2xl py-3 border border-white/10 bg-white/[0.04] text-white/75"
-                        onClick={() => {
-                          const rest = props.run.rest!;
-                          props.onUpdate({
-                            rest: {
-                              ...rest,
-                              totalSec: Math.max(1, rest.totalSec - 15),
-                              untilMs: Math.max(Date.now(), rest.untilMs - 15000),
-                            },
-                          });
-                        }}
-                      >
-                        -15s
-                      </button>
-                    </div>
+          <div className="px-5 pb-1">
+            <div className="flex items-center justify-center py-2">
+              <div className="relative w-24 h-24">
+                <svg viewBox="0 0 100 100" className="absolute inset-0">
+                  <circle cx="50" cy="50" r="44" stroke="rgba(255,255,255,0.10)" strokeWidth="8" fill="none" />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="44"
+                    stroke="rgba(241,195,93,0.70)"
+                    strokeWidth="8"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeDasharray={2 * Math.PI * 44}
+                    strokeDashoffset={
+                      2 * Math.PI * 44 *
+                      (props.run.rest
+                        ? Math.max(0, Math.min(1, (props.run.rest.untilMs - now) / (props.run.rest.totalSec * 1000)))
+                        : 0)
+                    }
+                    style={{ transform: "rotate(-90deg)", transformOrigin: "50% 50%" }}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <div className="text-[10px] text-white/40">{props.run.rest ? "REST" : "TIME"}</div>
+                  <div className="text-xl font-semibold tabular-nums text-white/90">
+                    {props.run.rest ? fmtClock(Math.max(0, Math.ceil((props.run.rest.untilMs - now) / 1000))) : fmtElapsed(now - startedAt)}
                   </div>
-                );
-              })()
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="px-5 pb-5">
+            <ConfirmDialog
+              open={confirmExit}
+              title="End workout?"
+              body="You can resume later, discard it, or finish now and save what you logged so far."
+              primaryText="Finish now"
+              onPrimary={() => {
+                setConfirmExit(false);
+                finishNow();
+              }}
+              secondaryText="Discard"
+              onSecondary={() => {
+                setConfirmExit(false);
+                props.onDiscard();
+              }}
+              cancelText="Resume later"
+              onCancel={() => {
+                setConfirmExit(false);
+                props.onClose();
+              }}
+            />
+
+            {props.run.rest ? (
+              <>
+                <div className="text-[11px] text-white/45 mb-2">Rest ({props.run.rest!.kind})</div>
+                <div className="mt-4 grid grid-cols-3 gap-2">
+                  <button
+                    className="rounded-2xl py-3 border border-white/10 bg-white/[0.04] text-white/75"
+                    onClick={() => {
+                      const rest = props.run.rest!;
+                      props.onUpdate({
+                        rest: null,
+                        seqIndex: rest.advance.seqIndex,
+                        currentWeightKg: rest.advance.currentWeightKg,
+                        currentReps: rest.advance.currentReps,
+                        results: rest.advance.results,
+                      });
+                    }}
+                  >
+                    Skip
+                  </button>
+                  <button
+                    className="rounded-2xl py-3 border border-white/10 bg-white/[0.04] text-white/75"
+                    onClick={() => {
+                      const rest = props.run.rest!;
+                      props.onUpdate({
+                        rest: {
+                          ...rest,
+                          totalSec: rest.totalSec + 15,
+                          untilMs: rest.untilMs + 15000,
+                        },
+                      });
+                    }}
+                  >
+                    +15s
+                  </button>
+                  <button
+                    className="rounded-2xl py-3 border border-white/10 bg-white/[0.04] text-white/75"
+                    onClick={() => {
+                      const rest = props.run.rest!;
+                      props.onUpdate({
+                        rest: {
+                          ...rest,
+                          totalSec: Math.max(1, rest.totalSec - 15),
+                          untilMs: Math.max(Date.now(), rest.untilMs - 15000),
+                        },
+                      });
+                    }}
+                  >
+                    -15s
+                  </button>
+                </div>
+              </>
             ) : (
               <>
                 <div className="grid grid-cols-2 gap-3">
@@ -1547,6 +1691,22 @@ export default function App() {
       <RunWorkoutModal
         run={run}
         onClose={() => setRun((prev) => ({ ...prev, open: false }))}
+        onDiscard={() => {
+          setRun({
+            open: false,
+            planned: null,
+            sequence: [],
+            seqIndex: 0,
+            currentWeightKg: 0,
+            currentReps: 10,
+            results: [],
+            startedAt: null,
+            rest: null,
+          });
+          try {
+            localStorage.removeItem("ascend.run.v1");
+          } catch {}
+        }}
         onUpdate={(patch) => setRun((prev) => ({ ...prev, ...patch }))}
         onFinish={(session) => {
           setState((prev) => ({
