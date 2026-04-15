@@ -12,25 +12,31 @@ import {
 
 type Tab = "dashboard" | "workouts" | "progress" | "plan";
 
+type RunStep = { exId: string; setNo: number };
+
 type RunState = {
   open: boolean;
   planned: PlannedWorkout | null;
-  exIndex: number;
-  setIndex: number;
+
+  // execution order (supports supersets)
+  sequence: RunStep[];
+  seqIndex: number;
+
   // editable during run
   currentWeightKg: number;
   currentReps: number;
+
   // collected
   results: Array<{ exId: string; repsBySet: number[]; weightKg: number }>;
   startedAt: number | null;
+
   rest: null | {
     kind: "set" | "exercise";
     totalSec: number;
     untilMs: number;
     // applied when rest ends
     advance: {
-      exIndex: number;
-      setIndex: number;
+      seqIndex: number;
       currentWeightKg: number;
       currentReps: number;
       results: Array<{ exId: string; repsBySet: number[]; weightKg: number }>;
@@ -691,6 +697,40 @@ function ProgressView() {
   );
 }
 
+function buildRunSequence(planned: PlannedWorkout): RunStep[] {
+  const seq: RunStep[] = [];
+  const exs = planned.exercises;
+
+  for (let i = 0; i < exs.length; i++) {
+    const e = exs[i]!;
+    const sid = e.supersetId;
+
+    if (!sid) {
+      for (let s = 1; s <= e.sets; s++) seq.push({ exId: e.id, setNo: s });
+      continue;
+    }
+
+    // collect contiguous superset block
+    const block: PlannedExercise[] = [e];
+    let j = i + 1;
+    while (j < exs.length && exs[j]?.supersetId === sid) {
+      block.push(exs[j]!);
+      j++;
+    }
+
+    const maxSets = Math.max(...block.map((b) => b.sets));
+    for (let set = 1; set <= maxSets; set++) {
+      for (const b of block) {
+        if (set <= b.sets) seq.push({ exId: b.id, setNo: set });
+      }
+    }
+
+    i = j - 1;
+  }
+
+  return seq;
+}
+
 function computeNextWorkout(sessions: WorkoutSession[]): PlannedWorkout {
   const sorted = sessions.slice().sort((a, b) => String(b.date).localeCompare(String(a.date)));
   const last = sorted[0];
@@ -891,17 +931,59 @@ function PlanView(props: {
       {planned ? (
         <Card title="Targets">
           <div className="space-y-4">
-            {planned.exercises.map((e) => (
-              <div key={e.id} className="flex items-center justify-between gap-4">
-                <div>
-                  <div className="text-sm text-white/90 font-medium">{e.name}</div>
-                  <div className="text-[12px] text-white/45 mt-1">
-                    {e.weightKg === 0 ? "BW" : `${e.weightKg} kg`} · {e.sets} sets · target {e.targetReps}
+            {(() => {
+              const out: any[] = [];
+              const exs = planned.exercises;
+              for (let i = 0; i < exs.length; i++) {
+                const e = exs[i]!;
+                if (!e.supersetId) {
+                  out.push(
+                    <div key={e.id} className="flex items-center justify-between gap-4">
+                      <div>
+                        <div className="text-sm text-white/90 font-medium">{e.name}</div>
+                        <div className="text-[12px] text-white/45 mt-1">
+                          {e.weightKg === 0 ? "BW" : `${e.weightKg} kg`} · {e.sets} sets · target {e.targetReps}
+                        </div>
+                      </div>
+                      <div className="text-[11px] text-white/35">Next</div>
+                    </div>
+                  );
+                  continue;
+                }
+
+                const sid = e.supersetId;
+                const block: PlannedExercise[] = [e];
+                let j = i + 1;
+                while (j < exs.length && exs[j]?.supersetId === sid) {
+                  block.push(exs[j]!);
+                  j++;
+                }
+
+                out.push(
+                  <div key={`superset-${sid}-${i}`} className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="text-[12px] text-white/75 font-semibold">Superset {sid}</div>
+                      <div className="text-[11px] text-white/35">Alternating</div>
+                    </div>
+                    <div className="mt-3 space-y-3">
+                      {block.map((b) => (
+                        <div key={b.id} className="flex items-center justify-between gap-4">
+                          <div>
+                            <div className="text-sm text-white/90 font-medium">{b.name}</div>
+                            <div className="text-[12px] text-white/45 mt-1">
+                              {b.weightKg === 0 ? "BW" : `${b.weightKg} kg`} · {b.sets} sets · target {b.targetReps}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-                <div className="text-[11px] text-white/35">Next</div>
-              </div>
-            ))}
+                );
+
+                i = j - 1;
+              }
+              return out;
+            })()}
           </div>
         </Card>
       ) : null}
@@ -932,8 +1014,9 @@ function RunWorkoutModal(props: {
   if (!props.run.open || !planned) return null;
   const plannedLocal = planned;
 
-  const ex = plannedLocal.exercises[props.run.exIndex]!;
-  const setNo = props.run.setIndex + 1;
+  const step = props.run.sequence[props.run.seqIndex];
+  const ex = step ? plannedLocal.exercises.find((x) => x.id === step.exId)! : plannedLocal.exercises[0]!;
+  const setNo = step ? step.setNo : 1;
 
   const weightOpts = weightOptions(ex.weightKg, 2.5, 8);
   const repsOpts = repsOptions(30);
@@ -951,10 +1034,9 @@ function RunWorkoutModal(props: {
       ? props.run.results.map((r) => (r.exId === ex.id ? { ...r, weightKg: weight, repsBySet: [...r.repsBySet, reps] } : r))
       : [...props.run.results, { exId: ex.id, weightKg: weight, repsBySet: [reps] }];
 
-    const isLastSet = setNo >= ex.sets;
-    const isLastEx = props.run.exIndex >= plannedLocal.exercises.length - 1;
+    const isLastStep = props.run.seqIndex >= props.run.sequence.length - 1;
 
-    if (isLastSet && isLastEx) {
+    if (isLastStep) {
       // build WorkoutSession
       const finishedAt = Date.now();
       const startedAtMs = props.run.startedAt ?? finishedAt;
@@ -989,30 +1071,24 @@ function RunWorkoutModal(props: {
       return;
     }
 
+    const nextStep = props.run.sequence[props.run.seqIndex + 1];
+    const nextEx = nextStep ? plannedLocal.exercises.find((x) => x.id === nextStep.exId) : null;
+
+    const sameExercise = !!nextEx && nextEx.id === ex.id;
+    const sameSuperset = !!nextEx && !!ex.supersetId && nextEx.supersetId === ex.supersetId;
+
     // Advance patch is applied AFTER rest.
-    const restSec = isLastSet ? 150 : 90;
-    const nextPatch = isLastSet
-      ? (() => {
-          const nextEx = plannedLocal.exercises[props.run.exIndex + 1]!;
-          return {
-            exIndex: props.run.exIndex + 1,
-            setIndex: 0,
-            currentWeightKg: nextEx.weightKg,
-            currentReps: nextEx.targetReps,
-            results,
-          };
-        })()
-      : {
-          exIndex: props.run.exIndex,
-          setIndex: props.run.setIndex + 1,
-          currentWeightKg: props.run.currentWeightKg,
-          currentReps: props.run.currentReps,
-          results,
-        };
+    const restSec = sameSuperset ? 60 : sameExercise ? 90 : 150;
+    const nextPatch = {
+      seqIndex: props.run.seqIndex + 1,
+      currentWeightKg: nextEx ? nextEx.weightKg : props.run.currentWeightKg,
+      currentReps: nextEx ? nextEx.targetReps : props.run.currentReps,
+      results,
+    };
 
     props.onUpdate({
       rest: {
-        kind: isLastSet ? "exercise" : "set",
+        kind: sameSuperset || sameExercise ? "set" : "exercise",
         totalSec: restSec,
         untilMs: Date.now() + restSec * 1000,
         advance: nextPatch,
@@ -1036,8 +1112,7 @@ function RunWorkoutModal(props: {
     if (Date.now() < rest.untilMs) return;
     props.onUpdate({
       rest: null,
-      exIndex: rest.advance.exIndex,
-      setIndex: rest.advance.setIndex,
+      seqIndex: rest.advance.seqIndex,
       currentWeightKg: rest.advance.currentWeightKg,
       currentReps: rest.advance.currentReps,
       results: rest.advance.results,
@@ -1053,7 +1128,7 @@ function RunWorkoutModal(props: {
             <div>
               <div className="text-sm text-white/85 font-semibold">{ex.name}</div>
               <div className="text-[11px] text-white/45 mt-1">
-                Set {setNo}/{ex.sets} · Exercise {props.run.exIndex + 1}/{plannedLocal.exercises.length} · {fmtElapsed(now - startedAt)}
+                Set {setNo}/{ex.sets} · Step {props.run.seqIndex + 1}/{props.run.sequence.length} · {fmtElapsed(now - startedAt)}
               </div>
             </div>
             <button className="text-white/55 hover:text-white/80" onClick={props.onClose}>
@@ -1085,8 +1160,7 @@ function RunWorkoutModal(props: {
                           const rest = props.run.rest!;
                           props.onUpdate({
                             rest: null,
-                            exIndex: rest.advance.exIndex,
-                            setIndex: rest.advance.setIndex,
+                            seqIndex: rest.advance.seqIndex,
                             currentWeightKg: rest.advance.currentWeightKg,
                             currentReps: rest.advance.currentReps,
                             results: rest.advance.results,
@@ -1172,11 +1246,18 @@ export default function App() {
       const raw = localStorage.getItem(RUN_STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
+        const planned: PlannedWorkout | null = parsed?.planned ?? null;
+        const sequence: RunStep[] = Array.isArray(parsed?.sequence)
+          ? parsed.sequence
+          : planned
+            ? buildRunSequence(planned)
+            : [];
+
         return {
           open: false, // never auto-open modal
-          planned: parsed?.planned ?? null,
-          exIndex: parsed?.exIndex ?? 0,
-          setIndex: parsed?.setIndex ?? 0,
+          planned,
+          sequence,
+          seqIndex: parsed?.seqIndex ?? 0,
           currentWeightKg: parsed?.currentWeightKg ?? 0,
           currentReps: parsed?.currentReps ?? 10,
           results: Array.isArray(parsed?.results) ? parsed.results : [],
@@ -1188,8 +1269,8 @@ export default function App() {
     return {
       open: false,
       planned: null,
-      exIndex: 0,
-      setIndex: 0,
+      sequence: [],
+      seqIndex: 0,
       currentWeightKg: 0,
       currentReps: 10,
       results: [],
@@ -1357,6 +1438,7 @@ export default function App() {
                       weightKg: 6,
                       sets: 3,
                       targetReps: 12,
+                      supersetId: "A",
                     },
                     {
                       id: uid("px"),
@@ -1365,6 +1447,7 @@ export default function App() {
                       weightKg: 0,
                       sets: 3,
                       targetReps: 15,
+                      supersetId: "A",
                     },
 
                     // B) Shoulder + Triceps
@@ -1375,6 +1458,7 @@ export default function App() {
                       weightKg: 12.5,
                       sets: 3,
                       targetReps: 12,
+                      supersetId: "B",
                     },
                     {
                       id: uid("px"),
@@ -1383,6 +1467,7 @@ export default function App() {
                       weightKg: 0,
                       sets: 3,
                       targetReps: 12,
+                      supersetId: "B",
                     },
                     {
                       id: uid("px"),
@@ -1419,6 +1504,7 @@ export default function App() {
                       weightKg: 0,
                       sets: 3,
                       targetReps: 15,
+                      supersetId: "D",
                     },
                     {
                       id: uid("px"),
@@ -1427,6 +1513,7 @@ export default function App() {
                       weightKg: 0,
                       sets: 3,
                       targetReps: 60,
+                      supersetId: "D",
                     },
                   ],
                 };
@@ -1434,19 +1521,22 @@ export default function App() {
               }}
               hasResume={!!run.planned}
               onResume={() => setRun((prev) => ({ ...prev, open: true }))}
-              onStart={(p) =>
+              onStart={(p) => {
+                const sequence = buildRunSequence(p);
+                const firstStep = sequence[0];
+                const firstEx = firstStep ? p.exercises.find((x) => x.id === firstStep.exId) : p.exercises[0];
                 setRun({
                   open: true,
                   planned: p,
-                  exIndex: 0,
-                  setIndex: 0,
-                  currentWeightKg: p.exercises[0]?.weightKg ?? 0,
-                  currentReps: p.exercises[0]?.targetReps ?? 10,
+                  sequence,
+                  seqIndex: 0,
+                  currentWeightKg: firstEx?.weightKg ?? 0,
+                  currentReps: firstEx?.targetReps ?? 10,
                   results: [],
                   startedAt: Date.now(),
                   rest: null,
-                } as RunState)
-              }
+                } as RunState);
+              }}
             />
           )}
         </div>
@@ -1467,8 +1557,8 @@ export default function App() {
           setRun({
             open: false,
             planned: null,
-            exIndex: 0,
-            setIndex: 0,
+            sequence: [],
+            seqIndex: 0,
             currentWeightKg: 0,
             currentReps: 10,
             results: [],

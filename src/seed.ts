@@ -67,6 +67,7 @@ export type PlannedExercise = {
   weightKg: number;
   sets: number;
   targetReps: number; // per set target
+  supersetId?: string; // if set, exercises with same id alternate by set during execution
 };
 
 export type PlannedWorkout = {
