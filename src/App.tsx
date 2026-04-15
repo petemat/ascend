@@ -835,6 +835,7 @@ function PlanView(props: {
   plannedWorkout: PlannedWorkout | null | undefined;
   onPlan: (p: PlannedWorkout) => void;
   onStart: (p: PlannedWorkout) => void;
+  onLoadTodayPlan: () => void;
   onResume: () => void;
   hasResume: boolean;
 }) {
@@ -863,21 +864,28 @@ function PlanView(props: {
         <div className="mt-4 grid grid-cols-2 gap-3">
           <button
             className="rounded-2xl py-3 border border-white/10 bg-white/[0.04] text-white/80"
+            onClick={props.onLoadTodayPlan}
+          >
+            Load Today
+          </button>
+          <button
+            className="rounded-2xl py-3 border border-white/10 bg-white/[0.04] text-white/80"
             onClick={() => props.onPlan(computeNextWorkout(props.sessions))}
           >
             Generate
           </button>
-          <button
-            className={cn(
-              "rounded-2xl py-3 border border-gold-300/30 bg-white/[0.06] text-gold-200 shadow-glow",
-              planned ? "" : "opacity-40"
-            )}
-            onClick={() => planned && props.onStart(planned)}
-            disabled={!planned}
-          >
-            Start
-          </button>
         </div>
+
+        <button
+          className={cn(
+            "mt-3 w-full rounded-2xl py-3 border border-gold-300/30 bg-white/[0.06] text-gold-200 shadow-glow",
+            planned ? "" : "opacity-40"
+          )}
+          onClick={() => planned && props.onStart(planned)}
+          disabled={!planned}
+        >
+          Start
+        </button>
       </Card>
 
       {planned ? (
@@ -1326,6 +1334,104 @@ export default function App() {
               sessions={sessions}
               plannedWorkout={state.plannedWorkout}
               onPlan={(p) => setState((prev) => ({ ...prev, plannedWorkout: p }))}
+              onLoadTodayPlan={() => {
+                const p: PlannedWorkout = {
+                  id: uid("pw"),
+                  date: isoToday(),
+                  title: "Today: Push (Longevity)",
+                  createdAt: Date.now(),
+                  exercises: [
+                    // A) Chest + Shoulder
+                    {
+                      id: uid("px"),
+                      name: "Incline DB Press (1x12@17.5, 2x8-10@20)",
+                      category: "chest",
+                      weightKg: 20,
+                      sets: 3,
+                      targetReps: 10,
+                    },
+                    {
+                      id: uid("px"),
+                      name: "Lateral Raise (6-7 kg)",
+                      category: "shoulders",
+                      weightKg: 6,
+                      sets: 3,
+                      targetReps: 12,
+                    },
+                    {
+                      id: uid("px"),
+                      name: "Push-Up (max clean)",
+                      category: "chest",
+                      weightKg: 0,
+                      sets: 3,
+                      targetReps: 15,
+                    },
+
+                    // B) Shoulder + Triceps
+                    {
+                      id: uid("px"),
+                      name: "Dumbbell Shoulder Press (12.5-15 kg)",
+                      category: "shoulders",
+                      weightKg: 12.5,
+                      sets: 3,
+                      targetReps: 12,
+                    },
+                    {
+                      id: uid("px"),
+                      name: "Triceps (Dips or Cable)",
+                      category: "arms",
+                      weightKg: 0,
+                      sets: 3,
+                      targetReps: 12,
+                    },
+                    {
+                      id: uid("px"),
+                      name: "Face Pull (25 kg)",
+                      category: "shoulders",
+                      weightKg: 25,
+                      sets: 3,
+                      targetReps: 15,
+                    },
+
+                    // C) Legs (short)
+                    {
+                      id: uid("px"),
+                      name: "Goblet Squat (17.5-20 kg)",
+                      category: "legs",
+                      weightKg: 17.5,
+                      sets: 3,
+                      targetReps: 15,
+                    },
+                    {
+                      id: uid("px"),
+                      name: "Lunges (optional) — 10/leg",
+                      category: "legs",
+                      weightKg: 0,
+                      sets: 2,
+                      targetReps: 10,
+                    },
+
+                    // D) Core
+                    {
+                      id: uid("px"),
+                      name: "Leg Raise",
+                      category: "core",
+                      weightKg: 0,
+                      sets: 3,
+                      targetReps: 15,
+                    },
+                    {
+                      id: uid("px"),
+                      name: "Plank (45-60s)",
+                      category: "core",
+                      weightKg: 0,
+                      sets: 3,
+                      targetReps: 60,
+                    },
+                  ],
+                };
+                setState((prev) => ({ ...prev, plannedWorkout: p }));
+              }}
               hasResume={!!run.planned}
               onResume={() => setRun((prev) => ({ ...prev, open: true }))}
               onStart={(p) =>
