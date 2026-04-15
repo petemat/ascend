@@ -1214,8 +1214,40 @@ export default function App() {
 
   const overlaysOpen = run.open || !!successSession; // if overlays are up, avoid accidental navigation
 
+  function onSwipeStart(t: { clientX: number; clientY: number } | null | undefined) {
+    if (overlaysOpen) return;
+    if (!t) return;
+    swipe.x = t.clientX;
+    swipe.y = t.clientY;
+    swipe.t = Date.now();
+    swipe.active = true;
+  }
+
+  function onSwipeEnd(t: { clientX: number; clientY: number } | null | undefined) {
+    if (overlaysOpen) return;
+    if (!swipe.active) return;
+    swipe.active = false;
+    if (!t) return;
+
+    const dx = t.clientX - swipe.x;
+    const dy = t.clientY - swipe.y;
+    const dt = Date.now() - swipe.t;
+
+    // Horizontal swipe: avoid triggering during vertical scroll.
+    if (dt > 700) return;
+    if (Math.abs(dx) < 60) return;
+    if (Math.abs(dx) < Math.abs(dy) * 1.2) return;
+
+    if (dx < 0) shiftTab(+1); // swipe left -> next
+    else shiftTab(-1); // swipe right -> prev
+  }
+
   return (
-    <div className="min-h-screen bg-noir-950">
+    <div
+      className="min-h-screen bg-noir-950"
+      onTouchStartCapture={(e) => onSwipeStart(e.touches[0])}
+      onTouchEndCapture={(e) => onSwipeEnd(e.changedTouches[0])}
+    >
       {/* Background silhouette: render as <img> (more reliable on mobile than filtered background-image) */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         {/* Single silhouette layer. If you can't see it, it's simply too subtle -> boost opacity + reduce blur. */}
@@ -1253,37 +1285,7 @@ export default function App() {
           </div>
         </div>
 
-        <div
-          className="mt-6"
-          onTouchStart={(e) => {
-            if (overlaysOpen) return;
-            const t = e.touches[0];
-            if (!t) return;
-            swipe.x = t.clientX;
-            swipe.y = t.clientY;
-            swipe.t = Date.now();
-            swipe.active = true;
-          }}
-          onTouchEnd={(e) => {
-            if (overlaysOpen) return;
-            if (!swipe.active) return;
-            swipe.active = false;
-
-            const t = e.changedTouches[0];
-            if (!t) return;
-            const dx = t.clientX - swipe.x;
-            const dy = t.clientY - swipe.y;
-            const dt = Date.now() - swipe.t;
-
-            // Horizontal swipe: avoid triggering during vertical scroll.
-            if (dt > 700) return;
-            if (Math.abs(dx) < 60) return;
-            if (Math.abs(dx) < Math.abs(dy) * 1.2) return;
-
-            if (dx < 0) shiftTab(+1); // swipe left -> next
-            else shiftTab(-1); // swipe right -> prev
-          }}
-        >
+        <div className="mt-6">
           {tab === "dashboard" && (
             <DashboardView
               sessions={sessions}
