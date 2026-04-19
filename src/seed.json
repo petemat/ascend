@@ -157,6 +157,21 @@
         { "id": "ex-2026-04-12-06", "name": "Leg Raise", "category": "core", "weightKg": 0, "sets": 3, "reps": 15, "setDetails": [15, 15, 15], "source": "confirmed" },
         { "id": "ex-2026-04-12-07", "name": "Plank", "category": "core", "weightKg": 0, "sets": 3, "reps": 45, "setDetails": [45, 45, 60], "weightNote": "seconds", "source": "confirmed" }
       ]
+    },
+    {
+      "id": "ws-2026-04-15",
+      "date": "2026-04-15",
+      "title": "Longevity",
+      "source": "confirmed",
+      "durationSec": 2820,
+      "exercises": [
+        { "id": "ex-2026-04-15-01", "name": "Incline DB Press (1x12@17.5, 2x8-10@20)", "category": "chest", "weightKg": 20, "sets": 3, "reps": 12, "setDetails": [12, 10, 10], "source": "confirmed" },
+        { "id": "ex-2026-04-15-02", "name": "Lateral Raise (6-7 kg)", "category": "shoulders", "weightKg": 7.5, "sets": 3, "reps": 12, "setDetails": [12, 12, 12], "source": "confirmed" },
+        { "id": "ex-2026-04-15-03", "name": "Push-Up (max clean)", "category": "chest", "weightKg": 0, "sets": 3, "reps": 30, "setDetails": [30, 30, 30], "source": "confirmed" },
+        { "id": "ex-2026-04-15-04", "name": "Dumbbell Shoulder Press (12.5-15 kg)", "category": "shoulders", "weightKg": 25, "sets": 3, "reps": 10, "setDetails": [10, 12, 12], "source": "confirmed" },
+        { "id": "ex-2026-04-15-05", "name": "Triceps (Dips or Cable)", "category": "arms", "weightKg": 20, "sets": 3, "reps": 10, "setDetails": [10, 12, 12], "source": "confirmed" },
+        { "id": "ex-2026-04-15-06", "name": "Face Pull (25 kg)", "category": "shoulders", "weightKg": 25, "sets": 3, "reps": 12, "setDetails": [12, 12, 12], "source": "confirmed" }
+      ]
     }
   ]
 }
