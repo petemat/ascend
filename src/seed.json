@@ -172,6 +172,25 @@
         { "id": "ex-2026-04-15-05", "name": "Triceps (Dips or Cable)", "category": "arms", "weightKg": 20, "sets": 3, "reps": 10, "setDetails": [10, 12, 12], "source": "confirmed" },
         { "id": "ex-2026-04-15-06", "name": "Face Pull (25 kg)", "category": "shoulders", "weightKg": 25, "sets": 3, "reps": 12, "setDetails": [12, 12, 12], "source": "confirmed" }
       ]
+    },
+    {
+      "id": "ws-2026-04-17",
+      "date": "2026-04-17",
+      "title": "Pull (Progress!)",
+      "source": "confirmed",
+      "exercises": [
+        { "id": "ex-2026-04-17-01", "name": "Lat Pulldown", "category": "back", "weightKg": 50, "sets": 1, "reps": 12, "setDetails": [12], "source": "confirmed" },
+        { "id": "ex-2026-04-17-02", "name": "Lat Pulldown", "category": "back", "weightKg": 55, "sets": 2, "reps": 10, "setDetails": [10, 12], "source": "confirmed" },
+        { "id": "ex-2026-04-17-03", "name": "One-Arm Dumbbell Row", "category": "back", "weightKg": 20, "sets": 3, "reps": 10, "setDetails": [10, 10, 10], "source": "confirmed" },
+        { "id": "ex-2026-04-17-04", "name": "Face Pull", "category": "shoulders", "weightKg": 25, "sets": 1, "reps": 12, "setDetails": [12], "source": "confirmed" },
+        { "id": "ex-2026-04-17-05", "name": "Face Pull", "category": "shoulders", "weightKg": 30, "sets": 1, "reps": 15, "setDetails": [15], "source": "confirmed" },
+        { "id": "ex-2026-04-17-06", "name": "Face Pull", "category": "shoulders", "weightKg": 35, "sets": 2, "reps": 12, "setDetails": [12, 11], "source": "confirmed" },
+        { "id": "ex-2026-04-17-07", "name": "Biceps Curl", "category": "arms", "weightKg": 10, "sets": 2, "reps": 12, "setDetails": [12, 10], "source": "confirmed" },
+        { "id": "ex-2026-04-17-08", "name": "Biceps Curl", "category": "arms", "weightKg": 15, "sets": 2, "reps": 8, "setDetails": [8, 10], "source": "confirmed" },
+        { "id": "ex-2026-04-17-09", "name": "Roman Chair Leg Raise", "category": "core", "weightKg": 0, "sets": 3, "reps": 15, "setDetails": [15, 15, 15], "source": "confirmed" },
+        { "id": "ex-2026-04-17-10", "name": "Plank", "category": "core", "weightKg": 0, "sets": 3, "reps": 60, "setDetails": [60, 60, 60], "weightNote": "seconds", "source": "confirmed" },
+        { "id": "ex-2026-04-17-11", "name": "Goblet Squat", "category": "legs", "weightKg": 16, "sets": 3, "reps": 15, "setDetails": [15, 15, 15], "source": "confirmed" }
+      ]
     }
   ]
 }
