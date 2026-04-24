@@ -1496,6 +1496,188 @@
           "source": "confirmed"
         }
       ]
+    },
+    {
+      "id": "ws-2026-04-23",
+      "date": "2026-04-23",
+      "title": "Push",
+      "source": "confirmed",
+      "exercises": [
+        {
+          "id": "ex-2026-04-23-01",
+          "name": "Chest Press / Bench Press",
+          "category": "chest",
+          "weightKg": 40,
+          "sets": 1,
+          "reps": 12,
+          "setDetails": [
+            12
+          ],
+          "source": "confirmed"
+        },
+        {
+          "id": "ex-2026-04-23-02",
+          "name": "Chest Press / Bench Press",
+          "category": "chest",
+          "weightKg": 50,
+          "sets": 1,
+          "reps": 12,
+          "setDetails": [
+            12
+          ],
+          "source": "confirmed"
+        },
+        {
+          "id": "ex-2026-04-23-03",
+          "name": "Chest Press / Bench Press",
+          "category": "chest",
+          "weightKg": 60,
+          "sets": 1,
+          "reps": 8,
+          "setDetails": [
+            8
+          ],
+          "source": "confirmed"
+        },
+        {
+          "id": "ex-2026-04-23-04",
+          "name": "Incline DB Press",
+          "category": "chest",
+          "weightKg": 20,
+          "sets": 1,
+          "reps": 12,
+          "setDetails": [
+            12
+          ],
+          "source": "confirmed"
+        },
+        {
+          "id": "ex-2026-04-23-05",
+          "name": "Incline DB Press",
+          "category": "chest",
+          "weightKg": 22.5,
+          "sets": 1,
+          "reps": 10,
+          "setDetails": [
+            10
+          ],
+          "source": "confirmed"
+        },
+        {
+          "id": "ex-2026-04-23-06",
+          "name": "Incline DB Press",
+          "category": "chest",
+          "weightKg": 25,
+          "sets": 1,
+          "reps": 10,
+          "setDetails": [
+            10
+          ],
+          "source": "confirmed"
+        },
+        {
+          "id": "ex-2026-04-23-07",
+          "name": "Dumbbell Shoulder Press",
+          "category": "shoulders",
+          "weightKg": 12.5,
+          "sets": 1,
+          "reps": 12,
+          "setDetails": [
+            12
+          ],
+          "source": "confirmed"
+        },
+        {
+          "id": "ex-2026-04-23-08",
+          "name": "Dumbbell Shoulder Press",
+          "category": "shoulders",
+          "weightKg": 15,
+          "sets": 1,
+          "reps": 12,
+          "setDetails": [
+            12
+          ],
+          "source": "confirmed"
+        },
+        {
+          "id": "ex-2026-04-23-09",
+          "name": "Dumbbell Shoulder Press",
+          "category": "shoulders",
+          "weightKg": 17.5,
+          "sets": 1,
+          "reps": 8,
+          "setDetails": [
+            8
+          ],
+          "source": "confirmed"
+        },
+        {
+          "id": "ex-2026-04-23-10",
+          "name": "Lateral Raise",
+          "category": "shoulders",
+          "weightKg": 7.5,
+          "sets": 2,
+          "reps": 10,
+          "setDetails": [
+            10,
+            12
+          ],
+          "source": "confirmed"
+        },
+        {
+          "id": "ex-2026-04-23-11",
+          "name": "Lateral Raise",
+          "category": "shoulders",
+          "weightKg": 6,
+          "sets": 1,
+          "reps": 16,
+          "setDetails": [
+            16
+          ],
+          "source": "confirmed"
+        },
+        {
+          "id": "ex-2026-04-23-12",
+          "name": "Triceps Pushdown",
+          "category": "arms",
+          "weightKg": 35,
+          "sets": 3,
+          "reps": 12,
+          "setDetails": [
+            12,
+            12,
+            12
+          ],
+          "source": "confirmed"
+        },
+        {
+          "id": "ex-2026-04-23-13",
+          "name": "Plank",
+          "category": "core",
+          "weightKg": 0,
+          "sets": 2,
+          "reps": 60,
+          "setDetails": [
+            60,
+            60
+          ],
+          "weightNote": "seconds",
+          "source": "confirmed"
+        },
+        {
+          "id": "ex-2026-04-23-14",
+          "name": "Leg Raise",
+          "category": "core",
+          "weightKg": 0,
+          "sets": 2,
+          "reps": 15,
+          "setDetails": [
+            15,
+            15
+          ],
+          "source": "confirmed"
+        }
+      ]
     }
   ]
 }
